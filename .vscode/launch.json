@@ -1,0 +1,30 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Ingest source",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "ingest.${input:source}",
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.env"
+    },
+    {
+      "name": "Build site",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/site/build_site.py",
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.env"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "source",
+      "type": "pickString",
+      "description": "Which source to ingest",
+      "options": ["entsoe", "eia", "ecb", "scb", "metobs", "forecast", "hydro"],
+      "default": "ecb"
+    }
+  ]
+}

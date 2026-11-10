@@ -1,0 +1,5 @@
+zone_key,zone_id,zone_name,region,counties_example,municipalities_example,grid_hubs_example,contains_stockholm,notes
+1,SE1,Northern Sweden,North,"Norrbotten; Vasterbotten; Jamtland; Vasternorrland","Lulea; Umea; Ostersund; Sundsvall","Storuman; Midskog; Holjeboda",false,"SEED - verify before publish"
+2,SE2,Central Sweden,Central,"Dalarna; Gavleborg; Varmland; Vastmanland; Orebro","Borlange; Gavle; Karlstad; Orebro; Vasteras","Sundsvall; Storheden; Horndal",false,"SEED - verify before publish"
+3,SE3,Eastern Sweden,East,"Stockholm; Uppsala; Sodermanland; Ostergotland; Gotland","Stockholm; Uppsala; Norrkoping; Visby","Arboga; Koping; Ekero",true,"SEED - verify before publish"
+4,SE4,Southern Sweden,South,"Skane; Blekinge; Halland; Kronoberg; Kalmar; Jonkoping","Malmo; Helsingborg; Vaxjo; Kalmar; Jonkoping","Habo; Barkakra; Maglarp",false,"SEED - verify before publish"

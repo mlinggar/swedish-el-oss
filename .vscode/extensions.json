@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "ms-toolsai.jupyter",
+    "mtxr.sqltools",
+    "mtxr.sqltools-driver-pg",
+    "innoverio.vscode-dbt-power-user"
+  ]
+}
