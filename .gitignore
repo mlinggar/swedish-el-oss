@@ -16,3 +16,5 @@ dbt/.user.yml
 # os / editor
 .DS_Store
 *.log
+dbt/logs/
+dbt/target/

@@ -1,0 +1,12 @@
+version: 2
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: raw_ecb
+      - name: raw_eia
+      - name: raw_entsoe
+      - name: raw_scb
+      - name: raw_smhi_metobs
+      - name: raw_smhi_forecast
+      - name: raw_smhi_hydro

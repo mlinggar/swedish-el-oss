@@ -1,0 +1,12 @@
+swedish_el:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: localhost
+      user: mlinggar
+      password: ""
+      port: 5432
+      dbname: swedish_el
+      schema: public
+      threads: 4
