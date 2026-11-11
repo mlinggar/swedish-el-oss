@@ -1,18 +1,20 @@
 """ENTSO-E: day-ahead price (A44), load forecast (A65), actual generation (A75).
 
-The API returns Publication_MarketDocument XML, so this module parses XML at
-ingest into flat rows (the plan's rule: non-JSON payloads are pre-parsed in
-Python). The bronze model then unnests and derives point_ts_utc.
+The API returns XML, parsed at ingest into flat rows (non-JSON payloads are
+pre-parsed in Python). Two document types:
+  A44 price          -> Publication_MarketDocument
+  A65 load / A75 gen -> GL_MarketDocument
+parse_entsoe_xml strips namespaces so both parse the same way. The bronze model
+unnests rows and derives point_ts_utc.
 """
 import os
 import sys
 import xml.etree.ElementTree as ET
 from datetime import date, timedelta
 
-from ingest.common import get_conn, load_env, run_requests, upsert_raw, fetch
+from ingest.common import fetch, get_conn, load_env, upsert_raw
 
 BASE = "https://web-api.tp.entsoe.eu/api"
-NS = "{urn:iec62325.351:tc57wg16:451-3:publicationdocument:7:3}"
 ZONES = {"SE1": "10Y1001A1001A44P", "SE2": "10Y1001A1001A45N",
          "SE3": "10Y1001A1001A46L", "SE4": "10Y1001A1001A47J"}
 CODES = {"A44": "ENERGY_PRICES",
@@ -23,47 +25,48 @@ HISTORY_START = date(2022, 1, 1)
 
 def parse_entsoe_xml(text):
     root = ET.fromstring(text)
-    doc_type = root.findtext(f"{NS}type") or ""
-    code = CODES.get(doc_type, "unknown")
+    for elem in root.iter():
+        if '}' in elem.tag:
+            elem.tag = elem.tag.split('}', 1)[1]
+        elem.attrib = {k.split('}', 1)[-1]: v for k, v in elem.attrib.items()}
+    doc_type = root.findtext('type') or ''
+    code = CODES.get(doc_type, 'unknown')
     rows = []
-    for ts in root.iter(f"{NS}TimeSeries"):
+    for ts in root.iter('TimeSeries'):
         biz = {}
-        area = ts.findtext(f"{NS}in_Domain.mRID") or ts.findtext(f"{NS}out_Domain.mRID")
+        area = (ts.findtext('in_Domain.mRID') or ts.findtext('out_Domain.mRID')
+                or ts.findtext('outBiddingZone_Domain.mRID')
+                or ts.findtext('inBiddingZone_Domain.mRID'))
         if area:
-            biz["AREA"] = area
-        psr = ts.findtext(f"{NS}PSRType/{NS}psrType")
+            biz['AREA'] = area
+        psr = ts.findtext('PSRType/psrType')
         if psr:
-            biz["PRODUCTION_TYPE"] = psr
-        contract = ts.findtext(f"{NS}contract_MarketAgreement.type")
+            biz['PRODUCTION_TYPE'] = psr
+        contract = ts.findtext('contract_MarketAgreement.type')
         if contract:
-            biz["CONTRACT_TYPE"] = contract
+            biz['CONTRACT_TYPE'] = contract
         inst = {}
-        cur = ts.findtext(f"{NS}currency_Unit.name")
+        cur = ts.findtext('currency_Unit.name')
         if cur:
-            inst["CURRENCY"] = cur
-        unit = ts.findtext(f"{NS}price_Measure_Unit.name") or ts.findtext(f"{NS}quantity_Unit.name")
+            inst['CURRENCY'] = cur
+        unit = (ts.findtext('price_Measure_Unit.name')
+                or ts.findtext('quantity_Measure_Unit.name')
+                or ts.findtext('quantity_Unit.name'))
         if unit:
-            inst["MEASURE_UNIT"] = unit
-        for period in ts.iter(f"{NS}Period"):
-            pfrom = period.findtext(f"{NS}timeInterval/{NS}start")
-            pto = period.findtext(f"{NS}timeInterval/{NS}end")
-            resolution = period.findtext(f"{NS}resolution") or ""
-            for pt in period.iter(f"{NS}Point"):
-                pos = pt.findtext(f"{NS}position")
-                price = pt.findtext(f"{NS}price.amount")
-                qty = pt.findtext(f"{NS}quantity")
-                rows.append({
-                    "data_item_code": code,
-                    "business_dim": biz,
-                    "instance_attr": inst,
-                    "period_from": pfrom,
-                    "period_to": pto,
-                    "resolution": resolution,
-                    "point_index": int(pos) if pos else None,
-                    "value_1": price if price is not None else qty,
-                    "value_2": None,
-                })
-    return {"rows": rows}
+            inst['MEASURE_UNIT'] = unit
+        for period in ts.iter('Period'):
+            pfrom = period.findtext('timeInterval/start')
+            pto = period.findtext('timeInterval/end')
+            resolution = period.findtext('resolution') or ''
+            for pt in period.iter('Point'):
+                pos = pt.findtext('position')
+                price = pt.findtext('price.amount')
+                qty = pt.findtext('quantity')
+                rows.append({'data_item_code': code, 'business_dim': biz, 'instance_attr': inst,
+                             'period_from': pfrom, 'period_to': pto, 'resolution': resolution,
+                             'point_index': int(pos) if pos else None,
+                             'value_1': price if price is not None else qty, 'value_2': None})
+    return {'rows': rows}
 
 
 def _price(t, dom, ps, pe):
