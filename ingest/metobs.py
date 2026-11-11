@@ -1,14 +1,17 @@
 """SMHI MetObs temperature (1), wind (4), precipitation (7) per zone.
 
 Three source formats (silver priority: archive_csv > gap_json > latest_day_json):
-  latest_day_json -> period/latest-day        (last 24h, JSON)
-  gap_json        -> period/latest-months     (rolling ~4 months, JSON)
-  archive_csv     -> period/corrected-archive (full history to 1990, CSV ONLY
-                       — the API 406s on the JSON form, so we use data.csv)
+  latest_day_json -> period/latest-day     (JSON -> raw.raw_smhi_metobs)
+  gap_json        -> period/latest-months  (JSON -> raw.raw_smhi_metobs)
+  archive_csv     -> period/corrected-archive (full history to 1990, CSV ONLY -
+                      the API 406s on JSON). Parsed into relational rows in
+                      raw.smhi_metobs_archive_rows (fast; no jsonb unnest downstream).
 """
 import re
 import sys
-from datetime import date
+from datetime import date, datetime, timezone
+
+from psycopg2.extras import execute_values
 
 from ingest.common import fetch, get_conn, run_requests, upsert_raw
 
@@ -16,8 +19,9 @@ BASE = "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter"
 PARAMS = {1: "temp", 4: "wind", 7: "precip"}
 STATIONS = {"SE1": 162860, "SE2": 127310, "SE3": 98230, "SE4": 52350}
 WIND_STATIONS = {"SE1": 162860, "SE2": 127310, "SE3": 97200, "SE4": 52350}
-PRECIP_ZONES = {"SE1", "SE3", "SE4"}  # SE2 has no precipitation station
+PRECIP_ZONES = {"SE1", "SE3", "SE4"}
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+PCODE = {"temp": "temp", "wind": "wind_speed", "precip": "precipitation"}
 
 
 def _st(param, zone):
@@ -52,7 +56,7 @@ def parse_smhi_csv(text):
     lines = [ln for ln in text.splitlines() if ln.strip()]
     di = next((i for i, ln in enumerate(lines) if ln.strip().lower().startswith("datum")), None)
     if di is None:
-        return {"_raw_text": text, "rows": []}
+        return {"header": {}, "rows": []}
     header = {}
     for i in range(di):
         head = [c.strip() for c in lines[i].split(";")]
@@ -74,8 +78,9 @@ def parse_smhi_csv(text):
 
 
 def archive_requests(conn, timeout=300):
-    """Full history via corrected-archive CSV (large responses). JSON form 406s."""
-    n = 0
+    """Full history via corrected-archive CSV -> relational rows (per-file replace)."""
+    cur = conn.cursor()
+    total = 0
     for zone in STATIONS:
         for param, name in PARAMS.items():
             if param == 7 and zone not in PRECIP_ZONES:
@@ -83,10 +88,23 @@ def archive_requests(conn, timeout=300):
             url = f"{BASE}/{param}/station/{_st(param, zone)}/period/corrected-archive/data.csv"
             fname = f"weather/metobs_historical_archive/{zone}/archive_{name}.csv"
             text = fetch(url, timeout=timeout)
-            upsert_raw(conn, "raw_smhi_metobs", fname, "historical", parse_smhi_csv(text))
-            n += 1
-            print(f"  + {fname}")
-    return n
+            p = parse_smhi_csv(text)
+            hdr = p["header"]
+            fmod = datetime.now(timezone.utc)
+            rows = [(fname, fmod, "historical", zone, PCODE[name], str(_st(param, zone)),
+                     hdr.get("Stationsnamn"), hdr.get("Parameternamn"), hdr.get("Enhet"),
+                     r["obs_date"], r["obs_time"], r["value"], r["quality"])
+                    for r in p["rows"]]
+            cur.execute("DELETE FROM raw.smhi_metobs_archive_rows WHERE source_file = %s", (fname,))
+            execute_values(cur,
+                "INSERT INTO raw.smhi_metobs_archive_rows "
+                "(source_file, file_modification_time, load_tier, zone, parameter_code, "
+                "station_id, station_name, parameter_name, unit, obs_date, obs_time, value, quality) "
+                "VALUES %s", rows, page_size=10000)
+            conn.commit()
+            total += len(rows)
+            print(f"  + {fname} ({len(rows)} rows)")
+    return total
 
 
 def run(historical=False):
@@ -94,11 +112,11 @@ def run(historical=False):
     try:
         if historical:
             n = archive_requests(conn)
-            n += run_requests(conn, "raw_smhi_metobs", gap_requests(), "historical", pause=1.0)
-            print(f"[metobs] stored {n} historical payload(s) (archive CSV + gap)")
+            m = run_requests(conn, "raw_smhi_metobs", gap_requests(), "historical", pause=1.0)
+            print(f"[metobs] archive rows={n}, gap files={m}")
         else:
             reqs = daily_requests() + gap_requests()
-            print(f"[metobs] storing {len(reqs)} daily payload(s) (latest-day + gap)")
+            print(f"[metobs] storing {len(reqs)} daily payload(s)")
             print(f"[metobs] stored {run_requests(conn, 'raw_smhi_metobs', reqs, 'daily')}")
     finally:
         conn.close()

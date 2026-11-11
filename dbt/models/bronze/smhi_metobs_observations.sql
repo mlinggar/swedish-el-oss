@@ -1,4 +1,5 @@
-{{ config(schema='bronze') }}
+{{ config(materialized='incremental', incremental_strategy='delete+insert',
+          unique_key='source_file', schema='bronze') }}
 with ranked as (
     select *, row_number() over (
         partition by input_file_name order by file_modification_time desc) as rn
@@ -6,13 +7,22 @@ with ranked as (
 ), raw as (
     select input_file_name, file_modification_time, load_tier, payload
     from ranked where rn = 1
+    {% if is_incremental() %}
+      and not exists (select 1 from {{ this }} t
+        where t.source_file = ranked.input_file_name
+          and t.file_modification_time >= ranked.file_modification_time)
+    {% endif %}
 ),
 json_branch as (
     select
-        r.input_file_name, r.file_modification_time, r.load_tier,
+        r.input_file_name as source_file, r.file_modification_time, r.load_tier,
         case when r.input_file_name like '%gap_%' then 'gap_json'
              else 'latest_day_json' end            as source_format,
         substring(r.input_file_name from '/(SE[1-4])/') as zone,
+        case when r.input_file_name like '%temp%'   then 'temp'
+             when r.input_file_name like '%wind%'   then 'wind_speed'
+             when r.input_file_name like '%precip%' then 'precipitation'
+        end                                        as parameter_code,
         r.payload->'station'->>'key'               as station_id,
         r.payload->'station'->>'name'              as station_name,
         r.payload->'parameter'->>'name'            as parameter_name,
@@ -24,22 +34,22 @@ json_branch as (
     from raw r
     cross join lateral jsonb_array_elements(r.payload->'value') as v(value)
     where r.payload ? 'value'
-), csv_branch as (
+),
+csv_branch as (
     select
-        r.input_file_name, r.file_modification_time, r.load_tier,
+        a.source_file, a.file_modification_time, a.load_tier,
         'archive_csv'                              as source_format,
-        substring(r.input_file_name from '/(SE[1-4])/') as zone,
-        r.payload->'header'->>'Stationsnummer'     as station_id,
-        r.payload->'header'->>'Stationsnamn'       as station_name,
-        r.payload->'header'->>'Parameternamn'      as parameter_name,
-        r.payload->'header'->>'Enhet'              as unit,
-        ((rw->>'Datum') || ' ' || (rw->>'Tid UTC') || ' +00')::timestamptz as obs_ts,
-        rw->>'value'                               as value,
-        rw->>'Kvalitet'                            as quality,
+        a.zone, a.parameter_code,
+        a.station_id, a.station_name, a.parameter_name, a.unit,
+        ((a.obs_date || ' ' || a.obs_time || ' +00')::timestamptz) as obs_ts,
+        a.value, a.quality,
         now()                                      as extracted_at
-    from raw r
-    cross join lateral jsonb_array_elements(r.payload->'rows') as rw
-    where r.payload ? 'rows'
+    from raw.smhi_metobs_archive_rows a
+    {% if is_incremental() %}
+    where not exists (select 1 from {{ this }} t
+        where t.source_file = a.source_file
+          and t.file_modification_time >= a.file_modification_time)
+    {% endif %}
 )
 select * from json_branch
 union all
