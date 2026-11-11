@@ -40,13 +40,6 @@ with spot as (
     select ts_local::date as date_local, zone as zone_id, avg(value) as discharge_m3s
     from {{ ref('smhi_hydro_observations_daily') }}
     group by 1,2
-), tax_fee as (
-    select
-        period_start as effective_month,
-        max(elskatt_sek_kwh) filter (where table_name='hushall' and customer_category='DA') as energy_tax_sek_kwh,
-        max(elnatspris_sek_kwh) filter (where table_name='elnat' and customer_category='1' and weighting='viktat') as grid_fee_sek_kwh
-    from {{ ref('consumer_prices') }}
-    group by 1
 )
 select
     cal.date_key, zb.zone_key, cal.date_local, cal.effective_month, s.zone_id,
@@ -54,19 +47,32 @@ select
     s.price_sek_kwh_avg, s.price_sek_kwh_min, s.price_sek_kwh_max,
     s.price_peak_avg_sek_kwh, s.price_offpeak_avg_sek_kwh,
     c.cheapest_hour_local, s.eur_sek_rate,
-    tf.energy_tax_sek_kwh, tf.grid_fee_sek_kwh,
+    tax.energy_tax_sek_kwh, fee.grid_fee_sek_kwh,
     0.25 as vat_rate,
-    (s.price_sek_kwh_avg + coalesce(tf.energy_tax_sek_kwh,0) + coalesce(tf.grid_fee_sek_kwh,0)) * 1.25 as total_consumer_sek_kwh,
+    (s.price_sek_kwh_avg + coalesce(tax.energy_tax_sek_kwh,0) + coalesce(fee.grid_fee_sek_kwh,0)) * 1.25 as total_consumer_sek_kwh,
     w.temp_c_avg, w.temp_c_min, w.temp_c_max, w.wind_speed_ms_avg, w.precipitation_mm_sum,
     f.forecast_reference_time, f.forecast_temp_c_avg, f.forecast_wind_ms_avg, f.forecast_precipitation_mm_sum,
     (w.temp_c_avg - f.forecast_temp_c_avg) as temp_forecast_error_c,
     h.discharge_m3s,
     cal.year as obs_year
 from spot s
-join {{ ref('dim_calendar') }} cal      on cal.date_local = s.date_local
-join {{ ref('dim_bidding_zone') }} zb   on zb.zone_id = s.zone_id
-left join cheapest c   on c.date_local = s.date_local and c.zone_id = s.zone_id
-left join tax_fee tf   on tf.effective_month = cal.effective_month
-left join weather w    on w.date_local = s.date_local and w.zone_id = s.zone_id
-left join forecast f   on f.date_local = s.date_local and f.zone_id = s.zone_id
-left join hydro h      on h.date_local = s.date_local and h.zone_id = s.zone_id
+join {{ ref('dim_calendar') }} cal    on cal.date_local = s.date_local
+join {{ ref('dim_bidding_zone') }} zb on zb.zone_id = s.zone_id
+left join cheapest c on c.date_local = s.date_local and c.zone_id = s.zone_id
+left join lateral (
+    select cp.elskatt_sek_kwh as energy_tax_sek_kwh
+    from {{ ref('consumer_prices') }} cp
+    where cp.table_name='hushall' and cp.customer_category='DA'
+      and cp.period_start <= cal.effective_month
+    order by cp.period_start desc limit 1
+) tax on true
+left join lateral (
+    select cp.elnatspris_sek_kwh as grid_fee_sek_kwh
+    from {{ ref('consumer_prices') }} cp
+    where cp.table_name='elnat' and cp.customer_category='1' and cp.weighting='viktat'
+      and cp.period_start <= cal.effective_month
+    order by cp.period_start desc limit 1
+) fee on true
+left join weather w  on w.date_local = s.date_local and w.zone_id = s.zone_id
+left join forecast f on f.date_local = s.date_local and f.zone_id = s.zone_id
+left join hydro h    on h.date_local = s.date_local and h.zone_id = s.zone_id
