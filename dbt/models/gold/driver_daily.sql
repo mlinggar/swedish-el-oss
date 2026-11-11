@@ -14,7 +14,7 @@ unpivoted as (
         ('Wind Avg m/s',      b.wind_speed_ms_avg),
         ('Precipitation mm',  b.precipitation_mm_sum),
         ('Discharge m3/s',    b.discharge_m3s)
-    ) as d(driver_name, d.driver_value)
+    ) as d(driver_name, driver_value)
 ),
 gas as (
     select f.date_local, f.zone_id, f.price_sek_kwh_avg as spot_sek_kwh,
