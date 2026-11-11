@@ -1,20 +1,23 @@
 """SMHI MetObs temperature (1), wind (4), precipitation (7) per zone.
 
-Three source formats, matching the silver source_format contract:
-  latest_day_json -> period/latest-day
-  gap_json        -> period/latest-months   (fills gaps back through history)
-  archive_csv     -> period/corrected-archive (QC'd CSV, pre-parsed to rows here)
+Three source formats (silver priority: archive_csv > gap_json > latest_day_json):
+  latest_day_json -> period/latest-day        (last 24h, JSON)
+  gap_json        -> period/latest-months     (rolling ~4 months, JSON)
+  archive_csv     -> period/corrected-archive (full history to 1990, CSV ONLY
+                       — the API 406s on the JSON form, so we use data.csv)
 """
+import re
 import sys
 from datetime import date
 
-from ingest.common import get_conn, run_requests, upsert_raw, fetch
+from ingest.common import fetch, get_conn, run_requests, upsert_raw
 
 BASE = "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter"
 PARAMS = {1: "temp", 4: "wind", 7: "precip"}
 STATIONS = {"SE1": 162860, "SE2": 127310, "SE3": 98230, "SE4": 52350}
 WIND_STATIONS = {"SE1": 162860, "SE2": 127310, "SE3": 97200, "SE4": 52350}
 PRECIP_ZONES = {"SE1", "SE3", "SE4"}  # SE2 has no precipitation station
+DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 def _st(param, zone):
@@ -45,46 +48,57 @@ def gap_requests():
 
 
 def parse_smhi_csv(text):
-    """Split an SMHI corrected-archive CSV into header metadata + data rows."""
+    """SMHI corrected-archive CSV -> {header:{...}, rows:[{obs_date,obs_time,value,quality}]}."""
     lines = [ln for ln in text.splitlines() if ln.strip()]
-    split = next((i for i, ln in enumerate(lines) if ln.lower().startswith("datum")), None)
-    if split is None:
+    di = next((i for i, ln in enumerate(lines) if ln.strip().lower().startswith("datum")), None)
+    if di is None:
         return {"_raw_text": text, "rows": []}
     header = {}
-    for ln in lines[:split]:
-        if ";" in ln:
-            k, v = ln.split(";", 1)
-            header[k.strip()] = v.strip()
-    cols = [c.strip() for c in lines[split].split(";")]
-    rows = [dict(zip(cols, ln.split(";"))) for ln in lines[split + 1:]]
-    return {"header": header, "columns": cols, "rows": rows}
+    for i in range(di):
+        head = [c.strip() for c in lines[i].split(";")]
+        if head and head[0] in ("Stationsnamn", "Parameternamn") and i + 1 < di:
+            val = [c.strip() for c in lines[i + 1].split(";")]
+            for k, v in zip(head, val):
+                if k:
+                    header[k] = v
+    rows = []
+    for ln in lines[di + 1:]:
+        p = [c.strip() for c in ln.split(";")]
+        if not p or not DATE_RE.match(p[0]):
+            continue
+        rows.append({"obs_date": p[0],
+                     "obs_time": p[1] if len(p) > 1 else None,
+                     "value": p[2] if len(p) > 2 else None,
+                     "quality": p[3] if len(p) > 3 else None})
+    return {"header": header, "rows": rows}
 
 
-def archive_requests(conn):
-    out = []
+def archive_requests(conn, timeout=300):
+    """Full history via corrected-archive CSV (large responses). JSON form 406s."""
+    n = 0
     for zone in STATIONS:
         for param, name in PARAMS.items():
             if param == 7 and zone not in PRECIP_ZONES:
                 continue
-            url = f"{BASE}/{param}/station/{_st(param, zone)}/period/corrected-archive/data.json"
-            text = fetch(url)
+            url = f"{BASE}/{param}/station/{_st(param, zone)}/period/corrected-archive/data.csv"
             fname = f"weather/metobs_historical_archive/{zone}/archive_{name}.csv"
+            text = fetch(url, timeout=timeout)
             upsert_raw(conn, "raw_smhi_metobs", fname, "historical", parse_smhi_csv(text))
-            out.append(fname)
+            n += 1
             print(f"  + {fname}")
-    return out
+    return n
 
 
 def run(historical=False):
     conn = get_conn()
     try:
         if historical:
-            print(f"[metobs] parsing archive CSVs")
-            n = len(archive_requests(conn))
-            print(f"[metobs] stored {n} archive payload(s)")
+            n = archive_requests(conn)
+            n += run_requests(conn, "raw_smhi_metobs", gap_requests(), "historical", pause=1.0)
+            print(f"[metobs] stored {n} historical payload(s) (archive CSV + gap)")
         else:
             reqs = daily_requests() + gap_requests()
-            print(f"[metobs] storing {len(reqs)} payload(s)")
+            print(f"[metobs] storing {len(reqs)} daily payload(s) (latest-day + gap)")
             print(f"[metobs] stored {run_requests(conn, 'raw_smhi_metobs', reqs, 'daily')}")
     finally:
         conn.close()
