@@ -1,4 +1,4 @@
-{{ config(schema='bronze') }}
+{{ config(materialized='incremental', incremental_strategy='delete+insert', unique_key='source_file') }}
 with ranked as (
     select *, row_number() over (
         partition by input_file_name order by file_modification_time desc) as rn
@@ -6,11 +6,15 @@ with ranked as (
 ), raw as (
     select input_file_name, file_modification_time, load_tier, payload
     from ranked where rn = 1
+    {% if is_incremental() %}
+      and not exists (select 1 from {{ this }} t
+        where t.source_file = ranked.input_file_name
+          and t.file_modification_time >= ranked.file_modification_time)
+    {% endif %}
 )
 select
     r.input_file_name                              as source_file,
-    r.load_tier,
-    r.file_modification_time,
+    r.load_tier, r.file_modification_time,
     case when r.input_file_name like '%historical%' then 'historical_json'
          else 'latest_day_json' end                as source_format,
     substring(r.input_file_name from '/(SE[1-4])/') as zone,
