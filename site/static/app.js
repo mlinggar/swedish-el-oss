@@ -209,12 +209,8 @@
   $("#foot-sources").innerHTML = (D.meta.sources || []).map(function (s) { return "<li>" + s + "</li>"; }).join("");
   $("#foot-generated").textContent = D.meta.generated_at || "—";
 
-  // ---- motion: smooth scroll + a staggered entrance (never leaves content hidden) ----
+  // ---- motion: a staggered entrance (native scroll; never leaves content hidden) ----
   function initMotion() {
-    if (!reduce && window.Lenis) {
-      var lenis = new Lenis({ duration: 1.05, smoothWheel: true });
-      (function raf(t) { lenis.raf(t); requestAnimationFrame(raf); })(0);
-    }
     var els = Array.prototype.slice.call(document.querySelectorAll("[data-reveal]"));
     if (reduce) { els.forEach(function (e) { e.classList.add("is-in"); }); return; }
     function revealAll() {
