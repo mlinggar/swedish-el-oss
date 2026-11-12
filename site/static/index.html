@@ -49,6 +49,16 @@
             </div>
           </div>
           <p class="updated">Latest day-ahead price for <span id="now-date">—</span>. Data refreshes daily.</p>
+
+          <div class="finder">
+            <label class="finder-label" for="pc-input">Find your price zone</label>
+            <div class="finder-row">
+              <input id="pc-input" type="text" inputmode="numeric" maxlength="6" autocomplete="postal-code"
+                     placeholder="Your postcode (e.g. 111 20)" aria-describedby="pc-result">
+              <button type="button" id="pc-btn">Find</button>
+            </div>
+            <p class="finder-result" id="pc-result" role="status">Enter your Swedish postcode and we will set your zone.</p>
+          </div>
         </div>
 
         <div class="well" data-reveal>
@@ -122,6 +132,48 @@
             <div class="bill-total">
               <span class="nm">Total you pay</span>
               <span class="vv tnum" id="bill-total">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ESTIMATE: your bill -->
+    <section class="estimate">
+      <div class="wrap">
+        <div class="section-head" data-reveal>
+          <p class="eyebrow">Estimate your bill</p>
+          <h2>What will you pay this month and next?</h2>
+          <p class="lede">Enter your last electricity bill, or your monthly usage. We apply the price
+            forecast for your zone so you can see what is coming.</p>
+        </div>
+        <div class="estimate-grid">
+          <div class="well" data-reveal>
+            <div class="est-mode" role="group" aria-label="How to enter your details">
+              <button type="button" data-mode="bill" aria-pressed="true">I know my bill</button>
+              <button type="button" data-mode="usage" aria-pressed="false">I know my usage</button>
+            </div>
+            <div class="est-fields">
+              <div class="field" id="field-bill">
+                <label for="est-bill">Last bill amount</label>
+                <div class="input-suffix"><input id="est-bill" type="number" inputmode="decimal" min="0" step="1" placeholder="e.g. 1200"><span class="suffix">SEK</span></div>
+              </div>
+              <div class="field" id="field-period">
+                <label for="est-period">This bill covers</label>
+                <select id="est-period"><option value="1">Last month</option><option value="3">Last 3 months</option></select>
+              </div>
+              <div class="field" id="field-usage" hidden>
+                <label for="est-usage">Monthly usage</label>
+                <div class="input-suffix"><input id="est-usage" type="number" inputmode="decimal" min="0" step="10" placeholder="e.g. 350"><span class="suffix">kWh / month</span></div>
+              </div>
+            </div>
+            <button type="button" class="est-go" id="est-go">Estimate my bill</button>
+            <p class="est-note">Uses your zone (<span id="est-zone">SE4</span>). Assumes steady monthly
+              usage and leaves out the small fixed grid fee.</p>
+          </div>
+          <div class="well est-out" data-reveal>
+            <div class="est-result" id="est-result">
+              <p class="est-hint">Enter your details to see your estimate.</p>
             </div>
           </div>
         </div>

@@ -198,6 +198,34 @@ def gather():
             drivers["trend"][z][fk] = [tdata[z].get(fk, {}).get(d) for d in ds]
     out["drivers"] = drivers
 
+    # ---- bill estimator data: monthly prices (derive usage) + this/next-month forecast ----
+    cur_month = latest.replace(day=1)
+    nxt_month = cur_month.replace(year=cur_month.year + 1, month=1) if cur_month.month == 12 \
+        else cur_month.replace(month=cur_month.month + 1)
+    mlabel = lambda d: d.strftime("%B %Y")
+    bill_est = {"monthly": {z: {} for z in zones}, "forecast": {z: {} for z in zones}}
+    for z in zones:
+        for r in rows(cur, """SELECT to_char(date_trunc('month', date_local),'YYYY-MM') AS mon,
+                  avg(total_consumer_sek_kwh) AS price
+           FROM gold.fact_daily WHERE zone_id = %s AND date_local >= %s GROUP BY 1 ORDER BY 1""",
+                     (z, latest - dt.timedelta(days=365))):
+            bill_est["monthly"][z][r["mon"]] = f(r["price"], 3)
+        r = rows(cur, """WITH days AS (
+             SELECT total_consumer_sek_kwh AS bill FROM gold.fact_daily
+             WHERE zone_id = %s AND date_local >= date_trunc('month', %s::date) AND date_local <= %s
+             UNION ALL
+             SELECT total_bill_sek_kwh AS bill FROM gold.price_forecast
+             WHERE zone = %s AND is_forecast AND target_date > %s
+               AND target_date < date_trunc('month', %s::date) + interval '1 month')
+           SELECT avg(bill) AS price FROM days""", (z, latest, latest, z, latest, latest))
+        bill_est["forecast"][z]["current"] = {"price": f(r[0]["price"], 3), "label": mlabel(cur_month)}
+        r = rows(cur, """SELECT total_bill_sek_kwh AS p, total_bill_p10_sek_kwh AS p10, total_bill_p90_sek_kwh AS p90
+           FROM gold.price_forecast_summary WHERE zone = %s AND horizon = 'next-month'""", (z,))
+        if r:
+            bill_est["forecast"][z]["next"] = {"price": f(r[0]["p"], 3), "p10": f(r[0]["p10"], 3),
+                                               "p90": f(r[0]["p90"], 3), "label": mlabel(nxt_month)}
+    out["bill_est"] = bill_est
+
     conn.close()
     return out
 

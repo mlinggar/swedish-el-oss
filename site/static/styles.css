@@ -285,6 +285,67 @@ footer li { padding: 3px 0; font-size: 14px; }
 .chart-note strong { color: var(--ink); font-weight: 600; }
 .chart-note .take { margin: 9px 0 0; }
 
+/* ---------- find your zone ---------- */
+.finder { margin: 26px 0 0; max-width: 430px; }
+.finder-label { display: block; font-family: var(--f-display); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+.finder-row { display: flex; gap: 8px; }
+.finder-row input {
+  flex: 1; min-width: 0; font-family: var(--f-body); font-size: 15px;
+  padding: 11px 14px; border: 1px solid var(--line); border-radius: 10px;
+  background: var(--surface); color: var(--ink);
+}
+.finder-row input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.finder-row button {
+  font-family: var(--f-display); font-weight: 600; font-size: 14px;
+  padding: 11px 20px; border: 0; border-radius: 10px;
+  background: var(--ink); color: #fff; cursor: pointer;
+  transition: transform 0.15s var(--ease), opacity 0.15s var(--ease);
+}
+.finder-row button:hover { opacity: 0.9; transform: translateY(-1px); }
+.finder-result { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
+.finder-result.is-ok { color: #1f6b52; }
+.finder-result.is-warn { color: #8a6100; }
+.finder-result.is-bad { color: #b02818; }
+
+/* ---------- bill estimator ---------- */
+.estimate-grid { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: start; }
+@media (min-width: 860px) { .estimate-grid { grid-template-columns: 1fr 1fr; } }
+.est-mode { display: inline-flex; gap: 4px; padding: 4px; background: var(--ground); border-radius: var(--r-pill); margin-bottom: 20px; }
+.est-mode button {
+  font-family: var(--f-display); font-size: 13px; font-weight: 500;
+  padding: 8px 16px; border: 0; border-radius: var(--r-pill);
+  background: transparent; color: var(--muted); cursor: pointer;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+.est-mode button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(12,18,23,0.06); }
+.est-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 7px; }
+.field label { font-size: 13px; color: var(--muted); }
+.input-suffix { position: relative; display: flex; align-items: center; }
+.input-suffix input, .field select {
+  width: 100%; font-family: var(--f-body); font-size: 15px;
+  padding: 11px 14px; border: 1px solid var(--line); border-radius: 10px;
+  background: var(--surface); color: var(--ink);
+}
+.input-suffix .suffix { position: absolute; right: 12px; font-size: 12px; color: var(--muted); pointer-events: none; }
+.input-suffix input:focus-visible, .field select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.est-go {
+  width: 100%; margin-top: 18px; font-family: var(--f-display); font-weight: 600; font-size: 15px;
+  padding: 13px; border: 0; border-radius: 10px; background: var(--accent-text); color: #fff; cursor: pointer;
+  transition: transform 0.15s var(--ease), opacity 0.15s var(--ease);
+}
+.est-go:hover { opacity: 0.92; transform: translateY(-1px); }
+.est-note { margin: 12px 0 0; font-size: 12.5px; color: var(--muted); }
+.est-out { min-height: 190px; }
+.est-hint { color: var(--muted); font-size: 15px; margin: 0; }
+.est-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 16px 0; border-top: 1px solid var(--line); }
+.est-row:first-child { border-top: 0; padding-top: 4px; }
+.est-k { font-family: var(--f-display); font-weight: 600; font-size: 18px; margin: 0; letter-spacing: -0.01em; }
+.est-sub { font-size: 12.5px; color: var(--muted); margin: 3px 0 0; }
+.est-v { font-family: var(--f-display); font-weight: 700; font-size: 32px; letter-spacing: -0.02em; margin: 0; }
+.est-v small { font-size: 14px; color: var(--muted); font-weight: 500; margin-left: 4px; }
+.est-usage { margin: 14px 0 0; font-size: 12.5px; color: var(--muted); }
+
 /* ---------- reveal (motion) ---------- */
 [data-reveal] { transition: opacity 0.7s var(--ease), transform 0.7s var(--ease); }
 .js-motion [data-reveal]:not(.is-in) { opacity: 0; transform: translateY(18px); }

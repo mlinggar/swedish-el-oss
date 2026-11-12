@@ -292,17 +292,101 @@
     Object.keys(charts).forEach(function (k) { charts[k].resize(); });
   }
 
+  // ---- postcode -> zone lookup (source: Svenska kraftnat natomraden / Ei) ----
+  function inRanges(v, rs) { for (var i = 0; i < rs.length; i++) if (v >= rs[i][0] && v <= rs[i][1]) return true; return false; }
+  var ZONE_MAIN = { SE1: [[94, 98]], SE2: [[82, 91]], SE3: [[10, 19], [40, 78], [80, 80]], SE4: [[20, 32], [34, 39]] };
+  var ZONE_DEC3 = { SE1: [[931, 939]], SE2: [[816, 817], [921, 925]], SE3: [[332, 332], [790, 797], [811, 815], [818, 819]], SE4: [[331, 331], [333, 335]] };
+  var ZONE_UNDEC3 = [[330, 330], [336, 339], [798, 799], [810, 810], [920, 920], [926, 930]];
+  var ZONE_DESC = { SE1: "northern Sweden", SE2: "north-central Sweden", SE3: "central Sweden (Stockholm)", SE4: "southern Sweden (Malmö)" };
+  function zoneForPostcode(pc) {
+    var s = String(pc || "").replace(/\D/g, "");
+    if (s.length < 4) return { error: "Enter a 4-digit Swedish postcode." };
+    var p2 = parseInt(s.slice(0, 2), 10), p3 = parseInt(s.slice(0, 3), 10);
+    for (var z in ZONE_DEC3) if (inRanges(p3, ZONE_DEC3[z])) return { zone: z };
+    if (inRanges(p3, ZONE_UNDEC3)) return { boundary: true };
+    for (var z2 in ZONE_MAIN) if (inRanges(p2, ZONE_MAIN[z2])) return { zone: z2 };
+    return { error: "No zone match for this postcode. Check your electricity bill (elnätsfaktura)." };
+  }
+
+  function setZone(z) {
+    zone = z;
+    document.querySelectorAll(".zone-nav button").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-zone") === z));
+    });
+    renderAll();
+    document.querySelectorAll("[data-reveal]").forEach(function (e) { e.classList.add("is-in"); });
+    var ez = $("#est-zone"); if (ez) ez.textContent = z;
+    runEstimate();
+  }
+
+  // ---- find-your-zone widget ----
+  function initFinder() {
+    var input = $("#pc-input"), btn = $("#pc-btn"), res = $("#pc-result");
+    if (!input || !btn) return;
+    function lookup() {
+      var r = zoneForPostcode(input.value);
+      if (r.error) { res.textContent = r.error; res.className = "finder-result is-bad"; }
+      else if (r.boundary) {
+        res.textContent = "This postcode is near a zone boundary. Confirm your zone on your electricity bill (elnätsfaktura).";
+        res.className = "finder-result is-warn";
+      } else {
+        res.textContent = "You're in " + r.zone + " — " + ZONE_DESC[r.zone] + ". Charts updated below.";
+        res.className = "finder-result is-ok";
+        setZone(r.zone);
+      }
+    }
+    btn.addEventListener("click", lookup);
+    input.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); lookup(); } });
+  }
+
+  // ---- bill estimator ----
+  function runEstimate() {
+    var be = D.bill_est, out = $("#est-result"); if (!be || !out) return;
+    var active = document.querySelector(".est-mode button[aria-pressed='true']");
+    var mode = active ? active.getAttribute("data-mode") : "bill";
+    var usage = 0;
+    if (mode === "usage") {
+      usage = parseFloat($("#est-usage").value) || 0;
+    } else {
+      var bill = parseFloat($("#est-bill").value) || 0;
+      var period = parseInt($("#est-period").value, 10) || 1;
+      var mp = (be.monthly || {})[zone] || {};
+      var keys = Object.keys(mp).sort();
+      var complete = keys.slice(0, -1);
+      var refKeys = complete.slice(-period);
+      var refPrice = refKeys.length ? refKeys.reduce(function (s, k) { return s + mp[k]; }, 0) / refKeys.length : 0;
+      usage = refPrice ? (bill / period) / refPrice : 0;
+    }
+    if (!usage || usage <= 0) {
+      out.innerHTML = '<p class="est-hint">Enter your ' + (mode === "usage" ? "monthly usage" : "last bill") + ' to see an estimate.</p>';
+      return;
+    }
+    var fc = (be.forecast || {})[zone] || {}, cur = fc.current || {}, nxt = fc.next || {};
+    out.innerHTML =
+      '<div class="est-row"><div><p class="est-k">' + (cur.label || "This month") + '</p><p class="est-sub">at ' + fmt(cur.price, 2) + ' SEK/kWh</p></div>' +
+      '<p class="est-v tnum">' + fmt(usage * (cur.price || 0), 0) + '<small>SEK</small></p></div>' +
+      '<div class="est-row"><div><p class="est-k">' + (nxt.label || "Next month") + '</p><p class="est-sub">at ' + fmt(nxt.price, 2) + ' SEK/kWh · range ' + fmt(usage * (nxt.p10 || 0), 0) + '–' + fmt(usage * (nxt.p90 || 0), 0) + '</p></div>' +
+      '<p class="est-v tnum">' + fmt(usage * (nxt.price || 0), 0) + '<small>SEK</small></p></div>' +
+      '<p class="est-usage">Based on about ' + fmt(usage, 0) + ' kWh per month in ' + zone + '. Assumptions: steady usage, no fixed grid fee.</p>';
+  }
+  function initEstimator() {
+    var go = $("#est-go"); if (!go) return;
+    document.querySelectorAll(".est-mode button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var mode = b.getAttribute("data-mode");
+        document.querySelectorAll(".est-mode button").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+        $("#field-bill").hidden = (mode !== "bill");
+        $("#field-period").hidden = (mode !== "bill");
+        $("#field-usage").hidden = (mode !== "usage");
+        runEstimate();
+      });
+    });
+    go.addEventListener("click", runEstimate);
+  }
+
   // ---- zone selector ----
   document.querySelectorAll(".zone-nav button").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      zone = btn.getAttribute("data-zone");
-      document.querySelectorAll(".zone-nav button").forEach(function (b) {
-        b.setAttribute("aria-pressed", String(b === btn));
-      });
-      renderAll();
-      // re-rendered cards must not stay hidden behind the entrance state
-      document.querySelectorAll("[data-reveal]").forEach(function (e) { e.classList.add("is-in"); });
-    });
+    btn.addEventListener("click", function () { setZone(btn.getAttribute("data-zone")); });
   });
 
   // ---- footer ----
@@ -328,6 +412,8 @@
   // ---- boot ----
   renderAll();
   renderDvSeg();
+  initFinder();
+  initEstimator();
   initMotion();
   window.addEventListener("resize", function () {
     Object.keys(charts).forEach(function (k) { charts[k].resize(); });
