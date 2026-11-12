@@ -163,8 +163,12 @@
                 <select id="est-period"><option value="1">Last month</option><option value="3">Last 3 months</option></select>
               </div>
               <div class="field" id="field-usage" hidden>
-                <label for="est-usage">Monthly usage</label>
-                <div class="input-suffix"><input id="est-usage" type="number" inputmode="decimal" min="0" step="10" placeholder="e.g. 350"><span class="suffix">kWh / month</span></div>
+                <label for="est-usage">My usage</label>
+                <div class="input-suffix"><input id="est-usage" type="number" inputmode="decimal" min="0" step="10" placeholder="e.g. 1050"><span class="suffix">kWh</span></div>
+              </div>
+              <div class="field" id="field-usage-period" hidden>
+                <label for="est-usage-period">This usage covers</label>
+                <select id="est-usage-period"><option value="1">Last month</option><option value="3">Last 3 months</option></select>
               </div>
             </div>
             <button type="button" class="est-go" id="est-go">Estimate my bill</button>

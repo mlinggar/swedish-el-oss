@@ -346,7 +346,9 @@
     var mode = active ? active.getAttribute("data-mode") : "bill";
     var usage = 0;
     if (mode === "usage") {
-      usage = parseFloat($("#est-usage").value) || 0;
+      var uv = parseFloat($("#est-usage").value) || 0;
+      var up = parseInt($("#est-usage-period").value, 10) || 1;
+      usage = uv / up;
     } else {
       var bill = parseFloat($("#est-bill").value) || 0;
       var period = parseInt($("#est-period").value, 10) || 1;
@@ -378,6 +380,7 @@
         $("#field-bill").hidden = (mode !== "bill");
         $("#field-period").hidden = (mode !== "bill");
         $("#field-usage").hidden = (mode !== "usage");
+        $("#field-usage-period").hidden = (mode !== "usage");
         runEstimate();
       });
     });
