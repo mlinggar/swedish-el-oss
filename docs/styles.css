@@ -281,6 +281,10 @@ footer li { padding: 3px 0; font-size: 14px; }
 .seg button:hover { color: var(--ink); }
 .seg button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
 
+.chart-note { margin-top: 14px; color: var(--muted); font-size: 14px; line-height: 1.55; }
+.chart-note strong { color: var(--ink); font-weight: 600; }
+.chart-note .take { margin: 9px 0 0; }
+
 /* ---------- reveal (motion) ---------- */
 [data-reveal] { transition: opacity 0.7s var(--ease), transform 0.7s var(--ease); }
 .js-motion [data-reveal]:not(.is-in) { opacity: 0; transform: translateY(18px); }

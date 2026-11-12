@@ -196,6 +196,13 @@
               <p class="small">deseasoned correlation · -1 to +1</p>
             </div>
             <div id="corr-chart" class="chart short" role="img" aria-label="Correlation of each driver with the spot price"></div>
+            <div class="chart-note">
+              <p><strong>How to read this.</strong> Correlation shows how closely each driver moves
+                with the spot price, from -1 to +1. A bar to the right means prices tend to rise when
+                that driver rises. A bar to the left means prices tend to fall. The longer the bar,
+                the stronger the link.</p>
+              <p class="take"><strong>What it means here.</strong> <span id="corr-take"></span></p>
+            </div>
           </div>
           <div class="well" data-reveal>
             <div class="well-head">
@@ -204,6 +211,9 @@
             </div>
             <div class="seg" id="dv-seg" role="group" aria-label="Choose a driver"></div>
             <div id="dv-chart" class="chart" role="img" aria-label="Spot price and the selected driver over the last 120 days"></div>
+            <p class="chart-note">The two lines show how the spot price and the selected driver move
+              together over the last 120 days. When they rise and fall together, that driver is
+              linked to the price.</p>
           </div>
         </div>
       </div>

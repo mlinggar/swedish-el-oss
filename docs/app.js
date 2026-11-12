@@ -231,6 +231,24 @@
     }, true);
   }
 
+  function renderCorrNote() {
+    var dr = D.drivers, note = $("#corr-take");
+    if (!dr || !note) return;
+    var corr = (dr.correlation || {})[zone] || {};
+    var pos = null, neg = null;
+    Object.keys(dr.meta).forEach(function (fk) {
+      var r = corr[fk]; if (r == null) return;
+      var lab = (dr.meta[fk].label || "").toLowerCase();
+      if (r > 0 && (!pos || r > pos.r)) pos = { label: lab, r: r };
+      if (r < 0 && (!neg || r < neg.r)) neg = { label: lab, r: r };
+    });
+    var s = "";
+    if (pos && neg) s = "In " + zone + ", " + pos.label + " pushes electricity prices up the most, while " + neg.label + " pulls them down.";
+    else if (pos) s = "In " + zone + ", " + pos.label + " pushes electricity prices up the most.";
+    else if (neg) s = "In " + zone + ", " + neg.label + " pulls electricity prices down.";
+    note.textContent = s;
+  }
+
   function renderDriverChart() {
     var c = el("dv-chart"); if (!c || !D.drivers) return;
     var t = (D.drivers.trend || {})[zone] || {};
@@ -270,7 +288,7 @@
   function renderAll() {
     renderNow(); renderHero(); renderTrend(); renderHorizon();
     renderBill(); renderPlan(); renderZones();
-    renderDrivers(); renderCorr(); renderDriverChart();
+    renderDrivers(); renderCorr(); renderCorrNote(); renderDriverChart();
     Object.keys(charts).forEach(function (k) { charts[k].resize(); });
   }
 
