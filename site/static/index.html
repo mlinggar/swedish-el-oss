@@ -38,6 +38,16 @@
           <p class="lede">The live spot price, the full bill you actually pay, and an honest forecast
             for the day, week and month ahead. So you can plan when to run the dishwasher or charge the car.</p>
 
+          <div class="finder">
+            <label class="finder-label" for="pc-input">Find your price zone</label>
+            <div class="finder-row">
+              <input id="pc-input" type="text" inputmode="numeric" maxlength="6" autocomplete="postal-code"
+                     placeholder="Your postcode (e.g. 111 20)" aria-describedby="pc-result">
+              <button type="button" id="pc-btn">Find</button>
+            </div>
+            <p class="finder-result" id="pc-result" role="status">Enter your Swedish postcode and we will set your zone.</p>
+          </div>
+
           <div class="now" id="now-block">
             <div class="stat is-spot">
               <p class="label">Spot price <span id="now-zone">SE4</span></p>
@@ -49,16 +59,6 @@
             </div>
           </div>
           <p class="updated">Latest day-ahead price for <span id="now-date">—</span>. Data refreshes daily.</p>
-
-          <div class="finder">
-            <label class="finder-label" for="pc-input">Find your price zone</label>
-            <div class="finder-row">
-              <input id="pc-input" type="text" inputmode="numeric" maxlength="6" autocomplete="postal-code"
-                     placeholder="Your postcode (e.g. 111 20)" aria-describedby="pc-result">
-              <button type="button" id="pc-btn">Find</button>
-            </div>
-            <p class="finder-result" id="pc-result" role="status">Enter your Swedish postcode and we will set your zone.</p>
-          </div>
         </div>
 
         <div class="well" data-reveal>
