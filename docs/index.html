@@ -3,11 +3,210 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Swedish EL - electricity price dashboard</title>
+  <title>Swedish EL — electricity spot price, bill and forecast</title>
+  <meta name="description" content="Track the Swedish electricity spot price and the full bill you pay, with an honest forecast for the next day, week and month. Plan when to use electricity.">
+  <meta name="theme-color" content="#eef1f5">
+  <meta property="og:title" content="Swedish EL — electricity spot price, bill and forecast">
+  <meta property="og:description" content="Spot price, the bill you actually pay, and a forecast for the day, week and month ahead.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>Swedish EL</h1>
-  <p>Open-source rebuild: APIs -> raw -> dbt -> forecast -> this page.</p>
-  <p>Dashboard landing here once Module 6 (site/build_site.py) ships.</p>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="frame">
+    <div class="wordmark"><span class="dot" aria-hidden="true"></span>Swedish EL</div>
+    <nav class="zone-nav" aria-label="Bidding zone">
+      <button type="button" data-zone="SE1" aria-pressed="false">SE1</button>
+      <button type="button" data-zone="SE2" aria-pressed="false">SE2</button>
+      <button type="button" data-zone="SE3" aria-pressed="false">SE3</button>
+      <button type="button" data-zone="SE4" aria-pressed="true">SE4</button>
+    </nav>
+  </header>
+
+  <main id="main">
+    <!-- HERO: the honest line -->
+    <section class="hero">
+      <div class="wrap hero-grid">
+        <div>
+          <p class="eyebrow">Spot price &amp; forecast</p>
+          <h1>What electricity costs in Sweden, and where it is going.</h1>
+          <p class="lede">The live spot price, the full bill you actually pay, and an honest forecast
+            for the day, week and month ahead. So you can plan when to run the dishwasher or charge the car.</p>
+
+          <div class="now" id="now-block">
+            <div class="stat is-spot">
+              <p class="label">Spot price <span id="now-zone">SE4</span></p>
+              <p class="value tnum"><span id="now-spot">—</span><span class="unit">SEK/kWh</span></p>
+            </div>
+            <div class="stat">
+              <p class="label">All-in bill</p>
+              <p class="value tnum"><span id="now-bill">—</span><span class="unit">SEK/kWh</span></p>
+            </div>
+          </div>
+          <p class="updated">Latest day-ahead price for <span id="now-date">—</span>. Data refreshes daily.</p>
+        </div>
+
+        <div class="well" data-reveal>
+          <div class="well-head">
+            <p class="ctitle">The honest line</p>
+            <p class="small" id="hero-zone-label">SE4 · SEK/kWh</p>
+          </div>
+          <div id="hero-chart" class="chart short" role="img" aria-label="Spot price history and forecast with an uncertainty band"></div>
+          <div class="legend">
+            <span class="item"><span class="swatch"></span>Recorded spot</span>
+            <span class="item"><span class="swatch dashed"></span>Forecast</span>
+            <span class="item"><span class="swatch band"></span>Expected range (p10-p90)</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HORIZON -->
+    <section class="horizon">
+      <div class="wrap">
+        <div class="section-head" data-reveal>
+          <p class="eyebrow">What is coming</p>
+          <h2>The day, week and month ahead</h2>
+          <p class="lede">Model forecast with the range we expect. The bill estimate adds energy tax,
+            grid fee and VAT on top of the spot price.</p>
+        </div>
+        <div class="horizon-grid" id="horizon-grid"></div>
+      </div>
+    </section>
+
+    <!-- TREND: the signature chart -->
+    <section class="trend">
+      <div class="wrap">
+        <div class="section-head" data-reveal>
+          <p class="eyebrow">Price over time</p>
+          <h2>Solid is what has been charged. The soft band is the forecast.</h2>
+          <p class="lede">A year of daily spot prices for your zone, continuing into the forecast.
+            The band widens where the model is less certain.</p>
+        </div>
+        <div class="well" data-reveal>
+          <div class="well-head">
+            <p class="ctitle" id="trend-title">Spot price and forecast · SE4</p>
+            <p class="small">SEK/kWh</p>
+          </div>
+          <div id="trend-chart" class="chart tall" role="img" aria-label="Daily spot price over the past year and the forecast ahead"></div>
+          <div class="legend">
+            <span class="item"><span class="swatch"></span>Recorded spot</span>
+            <span class="item"><span class="swatch dashed"></span>Forecast (p50)</span>
+            <span class="item"><span class="swatch band"></span>Expected range (p10-p90)</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BILL -->
+    <section class="bill">
+      <div class="wrap">
+        <div class="section-head" data-reveal>
+          <p class="eyebrow">What you pay</p>
+          <h2>The bill is more than the spot price</h2>
+          <p class="lede">This is the full breakdown per kWh for your zone, averaged over the last
+            month. Only the spot part moves with the market.</p>
+        </div>
+        <div class="bill-grid">
+          <div class="well" data-reveal>
+            <div class="well-head"><p class="ctitle">Bill breakdown</p><p class="small">SEK/kWh</p></div>
+            <div id="bill-chart" class="chart" role="img" aria-label="Stacked bill breakdown by component"></div>
+          </div>
+          <div data-reveal>
+            <ul class="bill-list" id="bill-list"></ul>
+            <div class="bill-total">
+              <span class="nm">Total you pay</span>
+              <span class="vv tnum" id="bill-total">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PLAN -->
+    <section class="plan">
+      <div class="wrap">
+        <div class="section-head" data-reveal>
+          <p class="eyebrow">Plan your use</p>
+          <h2>When to use electricity</h2>
+          <p class="lede">Shift flexible use toward cheaper hours and days to cut your bill. These are
+            the patterns for your zone.</p>
+        </div>
+        <div class="plan-grid">
+          <div class="plan-stat" data-reveal>
+            <p class="label small">Cheapest hour (most days)</p>
+            <p class="big tnum"><span id="plan-hour">—</span><span class="u">:00</span></p>
+            <p class="small">Local time. Good for EV charging and timers.</p>
+          </div>
+          <div class="plan-stat" data-reveal>
+            <p class="label small">Off-peak vs peak</p>
+            <p class="big tnum"><span id="plan-offpeak">—</span><span class="u"> vs </span><span id="plan-peak">—</span></p>
+            <p class="small">Off-peak SEK/kWh vs peak SEK/kWh. Nights and weekends are cheaper.</p>
+          </div>
+          <div class="plan-stat" data-reveal>
+            <p class="label small">Cheapest day of the week</p>
+            <p class="big"><span id="plan-cheapday">—</span></p>
+            <p class="small">Based on the last 90 days of spot prices.</p>
+          </div>
+        </div>
+        <div class="well" data-reveal style="margin-top:16px">
+          <div class="well-head"><p class="ctitle">Average price by day of week</p><p class="small">SEK/kWh</p></div>
+          <div id="dow-chart" class="chart short" role="img" aria-label="Average spot price by day of week"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ZONES -->
+    <section class="zones">
+      <div class="wrap">
+        <div class="section-head" data-reveal>
+          <p class="eyebrow">Across Sweden</p>
+          <h2>The north is usually cheaper than the south</h2>
+          <p class="lede">Sweden is split into four price zones. Cheap hydropower sits in the north;
+            the biggest demand is in the south.</p>
+        </div>
+        <div class="well" data-reveal>
+          <div class="well-head"><p class="ctitle">Spot price by zone</p><p class="small">Latest day · SEK/kWh</p></div>
+          <div class="zone-bars" id="zone-bars"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div class="foot-grid">
+        <div>
+          <h3>About this site</h3>
+          <p class="small">Swedish EL is an open, free tracker for the Swedish electricity spot price
+            and the full consumer bill. Forecasts are model estimates with an expected range, not a promise.</p>
+        </div>
+        <div>
+          <h3>Data sources</h3>
+          <ul id="foot-sources"></ul>
+        </div>
+        <div>
+          <h3>Method</h3>
+          <ul>
+            <li>Bill = (spot + energy tax + grid fee) x 1.25 VAT</li>
+            <li>Forecast: gradient-boosted model, p50 with p10-p90</li>
+            <li>Zones SE1-SE4 (Nord Pool bidding areas)</li>
+          </ul>
+          <p class="small" style="margin-top:12px">Generated <span id="foot-generated">—</span></p>
+        </div>
+      </div>
+      <div class="foot-mark" aria-hidden="true">Swedish EL</div>
+    </div>
+  </footer>
+
+  <script src="data.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.42/dist/lenis.min.js" defer></script>
+  <script src="app.js" defer></script>
 </body>
 </html>
