@@ -26,6 +26,7 @@
   }
 
   var zone = "SE4";
+  var dvKey = "wind_now";
   var charts = {};
 
   function el(id) {
@@ -188,9 +189,88 @@
     });
   }
 
+  // ---- drivers: situation + correlation to the spot price ----
+  function renderDrivers() {
+    var dr = D.drivers; if (!dr) return;
+    var groups = [
+      { label: "Weather", items: ["temp_now", "wind_now", "precip_now"] },
+      { label: "Hydro", items: ["discharge_now"] },
+      { label: "Gas", items: ["gas_asof"] }
+    ];
+    $("#driver-cards").innerHTML = groups.map(function (g) {
+      var rows = g.items.map(function (fk) {
+        var meta = dr.meta[fk] || {}, latest = (dr.latest[zone] || {})[fk] || {}, r = (dr.correlation[zone] || {})[fk];
+        var rTxt = (r == null ? "—" : "r " + (r >= 0 ? "+" : "") + fmt(r, 2));
+        return '<li><span class="dc-nm">' + meta.label + '</span>' +
+          '<span class="dc-v tnum">' + fmt(latest.v, 1) + ' <small>' + meta.unit + '</small></span>' +
+          '<span class="dc-r ' + (r >= 0 ? "pos" : "neg") + '">' + rTxt + '</span></li>';
+      }).join("");
+      return '<article class="dcard" data-reveal><p class="dc-h">' + g.label + '</p><ul class="dc-list">' + rows + '</ul></article>';
+    }).join("");
+  }
+
+  function renderCorr() {
+    var c = el("corr-chart"); if (!c || !D.drivers) return;
+    var dr = D.drivers;
+    var corr = (dr.correlation || {})[zone] || {};
+    var items = Object.keys(dr.meta).map(function (fk) {
+      return { label: dr.meta[fk].label, r: corr[fk] || 0 };
+    }).sort(function (a, b) { return a.r - b.r; });
+    c.setOption({
+      animation: !reduce,
+      grid: { left: 6, right: 18, top: 8, bottom: 4, containLabel: true },
+      tooltip: { valueFormatter: function (v) { return "r = " + fmt(v, 2); } },
+      xAxis: { type: "value", min: -1, max: 1, splitLine: { lineStyle: { color: C.line } }, axisLabel: { color: C.muted, fontSize: 11 } },
+      yAxis: { type: "category", data: items.map(function (i) { return i.label; }), axisLine: { show: false }, axisTick: { show: false }, axisLabel: { color: C.ink, fontSize: 12 } },
+      series: [{
+        type: "bar", barWidth: 15,
+        data: items.map(function (i) {
+          return { value: i.r, itemStyle: { color: i.r >= 0 ? C.dear : C.cheap, borderRadius: 3 } };
+        })
+      }]
+    }, true);
+  }
+
+  function renderDriverChart() {
+    var c = el("dv-chart"); if (!c || !D.drivers) return;
+    var t = (D.drivers.trend || {})[zone] || {};
+    var meta = D.drivers.meta[dvKey] || {};
+    $("#dv-label").textContent = (meta.label || "").toLowerCase();
+    c.setOption({
+      animation: !reduce,
+      grid: { left: 6, right: 6, top: 22, bottom: 4, containLabel: true },
+      tooltip: { trigger: "axis" },
+      legend: { data: ["Spot price", meta.label || ""], textStyle: { color: C.muted, fontSize: 11 } },
+      xAxis: { type: "category", data: t.dates || [], boundaryGap: false, axisLabel: { color: C.muted, fontSize: 11 }, axisLine: { lineStyle: { color: C.line } }, axisTick: { show: false } },
+      yAxis: [
+        { type: "value", scale: true, splitLine: { lineStyle: { color: C.line } }, axisLabel: { color: C.muted, fontSize: 11 } },
+        { type: "value", scale: true, splitLine: { show: false }, axisLabel: { color: C.muted, fontSize: 11 } }
+      ],
+      series: [
+        { name: "Spot price", type: "line", data: t.spot || [], showSymbol: false, lineStyle: { color: C.accent, width: 2 }, yAxisIndex: 0 },
+        { name: meta.label || "", type: "line", data: t[dvKey] || [], showSymbol: false, lineStyle: { color: C.ink, width: 1.8 }, yAxisIndex: 1 }
+      ]
+    }, true);
+  }
+
+  function renderDvSeg() {
+    if (!D.drivers) return;
+    $("#dv-seg").innerHTML = Object.keys(D.drivers.meta).map(function (fk) {
+      return '<button type="button" data-dv="' + fk + '" aria-pressed="' + (fk === dvKey) + '">' + D.drivers.meta[fk].label + '</button>';
+    }).join("");
+    $("#dv-seg").querySelectorAll("button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        dvKey = b.getAttribute("data-dv");
+        $("#dv-seg").querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+        renderDriverChart();
+      });
+    });
+  }
+
   function renderAll() {
     renderNow(); renderHero(); renderTrend(); renderHorizon();
     renderBill(); renderPlan(); renderZones();
+    renderDrivers(); renderCorr(); renderDriverChart();
     Object.keys(charts).forEach(function (k) { charts[k].resize(); });
   }
 
@@ -202,6 +282,8 @@
         b.setAttribute("aria-pressed", String(b === btn));
       });
       renderAll();
+      // re-rendered cards must not stay hidden behind the entrance state
+      document.querySelectorAll("[data-reveal]").forEach(function (e) { e.classList.add("is-in"); });
     });
   });
 
@@ -211,6 +293,7 @@
 
   // ---- motion: a staggered entrance (native scroll; never leaves content hidden) ----
   function initMotion() {
+    document.documentElement.classList.add("js-motion");
     var els = Array.prototype.slice.call(document.querySelectorAll("[data-reveal]"));
     if (reduce) { els.forEach(function (e) { e.classList.add("is-in"); }); return; }
     function revealAll() {
@@ -226,6 +309,7 @@
 
   // ---- boot ----
   renderAll();
+  renderDvSeg();
   initMotion();
   window.addEventListener("resize", function () {
     Object.keys(charts).forEach(function (k) { charts[k].resize(); });

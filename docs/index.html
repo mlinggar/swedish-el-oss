@@ -176,6 +176,38 @@
         </div>
       </div>
     </section>
+
+    <!-- DRIVERS: what moves the price -->
+    <section class="drivers">
+      <div class="wrap">
+        <div class="section-head" data-reveal>
+          <p class="eyebrow">What moves the price</p>
+          <h2>Weather, water and fuel</h2>
+          <p class="lede">Swedish electricity leans on hydropower, wind and imported fuel. These are the
+            conditions now, and how closely each one tracks the spot price.</p>
+        </div>
+
+        <div class="driver-cards" id="driver-cards"></div>
+
+        <div class="driver-charts">
+          <div class="well" data-reveal>
+            <div class="well-head">
+              <p class="ctitle">How each driver tracks the spot price</p>
+              <p class="small">deseasoned correlation · -1 to +1</p>
+            </div>
+            <div id="corr-chart" class="chart short" role="img" aria-label="Correlation of each driver with the spot price"></div>
+          </div>
+          <div class="well" data-reveal>
+            <div class="well-head">
+              <p class="ctitle">Spot price vs <span id="dv-label">wind</span></p>
+              <p class="small">last 120 days · dual scale</p>
+            </div>
+            <div class="seg" id="dv-seg" role="group" aria-label="Choose a driver"></div>
+            <div id="dv-chart" class="chart" role="img" aria-label="Spot price and the selected driver over the last 120 days"></div>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer>

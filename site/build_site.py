@@ -157,6 +157,47 @@ def gather():
                   (latest - dt.timedelta(days=30),)):
         out["plan"][r["zone_id"]]["cheapest_hour"] = r["h"]
 
+    # ---- drivers: weather / hydro / gas + correlation to spot price ----
+    DRV = {
+        "Temp Avg °C": ("temp_now", "Temperature", "weather", "deg C"),
+        "Wind Avg m/s": ("wind_now", "Wind", "weather", "m/s"),
+        "Precipitation mm": ("precip_now", "Precipitation", "weather", "mm"),
+        "Discharge m3/s": ("discharge_now", "Hydro discharge", "hydro", "m3/s"),
+        "Gas Price SEK/MMBtu": ("gas_asof", "Gas price", "gas", "SEK/MMBtu"),
+    }
+    fkeys = [v[0] for v in DRV.values()]
+    drivers = {
+        "meta": {v[0]: {"label": v[1], "group": v[2], "unit": v[3]} for v in DRV.values()},
+        "correlation": {z: {} for z in zones},
+        "latest": {z: {} for z in zones},
+        "trend": {z: {} for z in zones},
+    }
+    for r in rows(cur, """SELECT name, zone, metric_value FROM gold.price_model_evidence
+       WHERE analysis='correlation' AND metric_name='pearson_r_deseasoned' AND name = ANY(%s)""",
+                  (fkeys,)):
+        if r["zone"] in drivers["correlation"]:
+            drivers["correlation"][r["zone"]][r["name"]] = f(r["metric_value"], 3)
+    for r in rows(cur, """SELECT DISTINCT ON (driver_name, zone_id) driver_name, zone_id, date_local, driver_value
+       FROM gold.driver_daily WHERE driver_value IS NOT NULL
+       ORDER BY driver_name, zone_id, date_local DESC"""):
+        if r["driver_name"] in DRV and r["zone_id"] in drivers["latest"]:
+            fk = DRV[r["driver_name"]][0]
+            drivers["latest"][r["zone_id"]][fk] = {"v": f(r["driver_value"], 2), "date": str(r["date_local"])}
+    tdates = {z: set() for z in zones}
+    tdata = {z: {} for z in zones}
+    for r in rows(cur, """SELECT zone_id, date_local, driver_name, driver_value, spot_sek_kwh
+       FROM gold.driver_daily WHERE date_local >= %s""", (latest - dt.timedelta(days=120),)):
+        z = r["zone_id"]; fk = DRV[r["driver_name"]][0]; d = str(r["date_local"])
+        tdates[z].add(d)
+        tdata[z].setdefault(fk, {})[d] = f(r["driver_value"])
+        tdata[z].setdefault("spot", {})[d] = f(r["spot_sek_kwh"])
+    for z in zones:
+        ds = sorted(tdates[z])
+        drivers["trend"][z] = {"dates": ds, "spot": [tdata[z]["spot"].get(d) for d in ds]}
+        for fk in fkeys:
+            drivers["trend"][z][fk] = [tdata[z].get(fk, {}).get(d) for d in ds]
+    out["drivers"] = drivers
+
     conn.close()
     return out
 
