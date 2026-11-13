@@ -15,7 +15,7 @@ import psycopg2
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOCS = os.path.join(REPO, "docs")
 STATIC = os.path.join(REPO, "site", "static")
-HISTORY_DAYS = 365  # window shown behind the forecast on the trend chart
+HISTORY_DAYS = 730  # window behind the forecast on the trend chart (covers 2025 + 2026)
 
 
 def get_conn():

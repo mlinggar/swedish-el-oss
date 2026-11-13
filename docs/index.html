@@ -95,17 +95,57 @@
         <div class="section-head" data-reveal>
           <p class="eyebrow">Price over time</p>
           <h2>Solid is what has been charged. The soft band is the forecast.</h2>
-          <p class="lede">A year of daily spot prices for your zone, continuing into the forecast.
-            The band widens where the model is less certain.</p>
+          <p class="lede">Daily spot and bill prices for your zone, continuing into the forecast.
+            Use the filters to focus on a period and switch between spot and bill. The band widens
+            where the model is less certain.</p>
         </div>
         <div class="well" data-reveal>
           <div class="well-head">
             <p class="ctitle" id="trend-title">Spot price and forecast · SE4</p>
             <p class="small">SEK/kWh</p>
           </div>
-          <div id="trend-chart" class="chart tall" role="img" aria-label="Daily spot price over the past year and the forecast ahead"></div>
+
+          <div class="slicer" id="trend-slicer">
+            <div class="slicer-group">
+              <span class="slicer-label">Year</span>
+              <div class="seg" data-filter="year" role="group" aria-label="Year">
+                <button type="button" data-v="all" aria-pressed="true">All</button>
+                <button type="button" data-v="2025" aria-pressed="false">2025</button>
+                <button type="button" data-v="2026" aria-pressed="false">2026</button>
+              </div>
+            </div>
+            <div class="slicer-group">
+              <span class="slicer-label">Quarter</span>
+              <div class="seg" data-filter="quarter" role="group" aria-label="Quarter">
+                <button type="button" data-v="all" aria-pressed="true">All</button>
+                <button type="button" data-v="1" aria-pressed="false">Q1</button>
+                <button type="button" data-v="2" aria-pressed="false">Q2</button>
+                <button type="button" data-v="3" aria-pressed="false">Q3</button>
+                <button type="button" data-v="4" aria-pressed="false">Q4</button>
+              </div>
+            </div>
+            <div class="slicer-group">
+              <label class="slicer-label" for="slicer-month">Month</label>
+              <select id="slicer-month" class="slicer-select">
+                <option value="all">All</option>
+                <option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option>
+                <option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option>
+                <option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option>
+                <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+              </select>
+            </div>
+            <div class="slicer-group">
+              <span class="slicer-label">Show</span>
+              <div class="seg" data-filter="measure" role="group" aria-label="Measure">
+                <button type="button" data-v="spot" aria-pressed="true">Spot price</button>
+                <button type="button" data-v="bill" aria-pressed="false">Bill price</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="trend-chart" class="chart tall" role="img" aria-label="Daily price over time and the forecast ahead"></div>
           <div class="legend">
-            <span class="item"><span class="swatch"></span>Recorded spot</span>
+            <span class="item"><span class="swatch"></span>Recorded</span>
             <span class="item"><span class="swatch dashed"></span>Forecast (p50)</span>
             <span class="item"><span class="swatch band"></span>Expected range (p10-p90)</span>
           </div>

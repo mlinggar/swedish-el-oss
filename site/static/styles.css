@@ -285,6 +285,26 @@ footer li { padding: 3px 0; font-size: 14px; }
 .chart-note strong { color: var(--ink); font-weight: 600; }
 .chart-note .take { margin: 9px 0 0; }
 
+/* ---------- trend slicer (year / quarter / month / measure) ---------- */
+.slicer { display: flex; flex-wrap: wrap; gap: 14px 22px; margin: 6px 0 18px; align-items: center; }
+.slicer-group { display: flex; align-items: center; gap: 9px; }
+.slicer-label { font-family: var(--f-display); font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.slicer .seg { display: inline-flex; gap: 3px; padding: 3px; background: var(--ground); border-radius: var(--r-pill); }
+.slicer .seg button {
+  font-family: var(--f-display); font-size: 12.5px; font-weight: 500;
+  padding: 6px 12px; border: 0; border-radius: var(--r-pill);
+  background: transparent; color: var(--muted); cursor: pointer;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+.slicer .seg button:hover { color: var(--ink); }
+.slicer .seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(12,18,23,0.06); }
+.slicer-select {
+  font-family: var(--f-body); font-size: 13px; padding: 8px 12px;
+  border: 1px solid var(--line); border-radius: 9px;
+  background: var(--surface); color: var(--ink); cursor: pointer;
+}
+.slicer-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
 /* ---------- find your zone ---------- */
 .finder { margin: 26px 0 0; max-width: 430px; }
 .finder-label { display: block; font-family: var(--f-display); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }

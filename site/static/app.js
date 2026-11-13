@@ -37,22 +37,41 @@
     return charts[id];
   }
 
-  // ---- the honest line (actual + forecast band). Used by hero + trend. ----
-  function honestOption(z, windowDays) {
-    var s = D.chart.series[z] || {};
-    var dates = D.chart.dates, n = dates.length;
-    // bridge the present so the line runs continuously into the forecast
-    var aspot = s.actual_spot.slice(), fspot = s.fc_spot.slice(),
-        fp10 = s.fc_spot_p10.slice(), fp90 = s.fc_spot_p90.slice();
-    var k = -1;
-    for (var i = 0; i < n; i++) if (aspot[i] != null) k = i;
-    if (k >= 0 && fspot[k] == null) { fspot[k] = aspot[k]; fp10[k] = aspot[k]; fp90[k] = aspot[k]; }
-    var band = fp10.map(function (v, i) { return (v == null || fp90[i] == null) ? null : fp90[i] - v; });
+  // ---- the honest line (actual + forecast band). cfg: {windowDays, filter, measure}. ----
+  function lineOption(z, cfg) {
+    cfg = cfg || {};
+    var s = D.chart.series[z] || {}, dates = D.chart.dates || [], n = dates.length;
+    var bill = cfg.measure === "bill";
+    var actual = (bill ? s.actual_bill : s.actual_spot) || [];
+    var fc = (bill ? s.fc_bill : s.fc_spot) || [];
+    var p10 = (bill ? s.fc_bill_p10 : s.fc_spot_p10) || [];
+    var p90 = (bill ? s.fc_bill_p90 : s.fc_spot_p90) || [];
 
-    var start = 0;
-    if (windowDays && n > windowDays) start = n - windowDays;
-    var cut = function (arr) { return arr.slice(start); };
-    var xd = dates.slice(start);
+    var idx = [];
+    for (var i = 0; i < n; i++) idx.push(i);
+    if (cfg.windowDays && n > cfg.windowDays) idx = idx.slice(n - cfg.windowDays);
+    if (cfg.filter) {
+      var fl = cfg.filter;
+      idx = idx.filter(function (i) {
+        var d = dates[i], y = +d.slice(0, 4), mo = +d.slice(5, 7), q = Math.ceil(mo / 3);
+        if (fl.year === "2025" && y !== 2025) return false;
+        if (fl.year === "2026" && y !== 2026) return false;
+        if (fl.year === "all" && y < 2025) return false;
+        if (fl.quarter !== "all" && q !== +fl.quarter) return false;
+        if (fl.month !== "all" && mo !== +fl.month) return false;
+        return true;
+      });
+    }
+    var xd = [], fa = [], ff = [], f10 = [], f90 = [];
+    for (var j = 0; j < idx.length; j++) {
+      var k = idx[j];
+      xd.push(dates[k]); fa.push(actual[k]); ff.push(fc[k]); f10.push(p10[k]); f90.push(p90[k]);
+    }
+    // bridge the present so the line runs continuously into the forecast
+    var lastA = -1;
+    for (var m = 0; m < fa.length; m++) if (fa[m] != null) lastA = m;
+    if (lastA >= 0 && ff[lastA] == null) { ff[lastA] = fa[lastA]; f10[lastA] = fa[lastA]; f90[lastA] = fa[lastA]; }
+    var band = f10.map(function (v, i) { return (v == null || f90[i] == null) ? null : f90[i] - v; });
 
     return {
       animation: !reduce, animationDuration: 900, animationEasing: "cubicOut",
@@ -65,21 +84,40 @@
       xAxis: { type: "category", data: xd, boundaryGap: false, axisLine: { lineStyle: { color: C.line } }, axisLabel: { color: C.muted, fontSize: 11 }, axisTick: { show: false } },
       yAxis: { type: "value", scale: true, splitLine: { lineStyle: { color: C.line } }, axisLabel: { color: C.muted, fontSize: 11 } },
       series: [
-        { name: "p10", type: "line", stack: "band", data: cut(fp10), lineStyle: { opacity: 0 }, areaStyle: { opacity: 0 }, symbol: "none", silent: true },
-        { name: "range", type: "line", stack: "band", data: cut(band), lineStyle: { opacity: 0 }, areaStyle: { color: C.band }, symbol: "none", silent: true },
-        { name: "Recorded", type: "line", data: cut(aspot), showSymbol: false, lineStyle: { color: C.ink, width: 2.2 }, emphasis: { disabled: true }, connectNulls: false },
-        { name: "Forecast", type: "line", data: cut(fspot), showSymbol: false, lineStyle: { color: C.accent, width: 2.2, type: "dashed" }, connectNulls: true }
+        { name: "p10", type: "line", stack: "band", data: f10, lineStyle: { opacity: 0 }, areaStyle: { opacity: 0 }, symbol: "none", silent: true },
+        { name: "range", type: "line", stack: "band", data: band, lineStyle: { opacity: 0 }, areaStyle: { color: C.band }, symbol: "none", silent: true },
+        { name: "Recorded", type: "line", data: fa, showSymbol: false, lineStyle: { color: C.ink, width: 2.2 }, emphasis: { disabled: true }, connectNulls: false },
+        { name: "Forecast", type: "line", data: ff, showSymbol: false, lineStyle: { color: C.accent, width: 2.2, type: "dashed" }, connectNulls: true }
       ]
     };
   }
 
+  // ---- trend chart filter (year / quarter / month / measure) ----
+  var trendFilter = { year: "all", quarter: "all", month: "all", measure: "spot" };
+
   function renderHero() {
-    var c = el("hero-chart"); if (c) c.setOption(honestOption(zone, 120), true);
+    var c = el("hero-chart"); if (c) c.setOption(lineOption(zone, { windowDays: 120 }), true);
   }
 
   function renderTrend() {
-    var c = el("trend-chart"); if (c) c.setOption(honestOption(zone, 0), true);
-    $("#trend-title").textContent = "Spot price and forecast · " + zone;
+    var c = el("trend-chart");
+    if (c) c.setOption(lineOption(zone, { filter: trendFilter, measure: trendFilter.measure }), true);
+    $("#trend-title").textContent = (trendFilter.measure === "bill" ? "Bill price" : "Spot price") + " and forecast · " + zone;
+  }
+
+  function initSlicer() {
+    document.querySelectorAll("#trend-slicer .seg").forEach(function (seg) {
+      var key = seg.getAttribute("data-filter");
+      seg.querySelectorAll("button").forEach(function (b) {
+        b.addEventListener("click", function () {
+          seg.querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+          trendFilter[key] = b.getAttribute("data-v");
+          renderTrend();
+        });
+      });
+    });
+    var sm = $("#slicer-month");
+    if (sm) sm.addEventListener("change", function () { trendFilter.month = sm.value; renderTrend(); });
   }
 
   // ---- hero now numbers ----
@@ -417,6 +455,7 @@
   renderDvSeg();
   initFinder();
   initEstimator();
+  initSlicer();
   initMotion();
   window.addEventListener("resize", function () {
     Object.keys(charts).forEach(function (k) { charts[k].resize(); });
