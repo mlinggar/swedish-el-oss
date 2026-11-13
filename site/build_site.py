@@ -5,6 +5,7 @@ Run (also wired into run_daily.sh):
     python site/build_site.py
 """
 import datetime as dt
+import hashlib
 import json
 import os
 import shutil
@@ -252,11 +253,26 @@ def main():
         fh.write("window.__DATA__=" + payload + ";")
     kb = len(payload) / 1024
     print(f"[ok] docs/data/data.json + docs/data.js ({kb:.0f} KB)")
+    # cache-busting version so browsers always refetch changed assets
+    hh = hashlib.md5()
+    for asset in (os.path.join(STATIC, "styles.css"), os.path.join(STATIC, "app.js"),
+                  os.path.join(DOCS, "data.js")):
+        if os.path.exists(asset):
+            hh.update(open(asset, "rb").read())
+    ver = hh.hexdigest()[:10]
     for name in ("index.html", "styles.css", "app.js", "favicon.svg"):
         src = os.path.join(STATIC, name)
-        if os.path.exists(src):
+        if not os.path.exists(src):
+            continue
+        if name == "index.html":
+            html = open(src, encoding="utf-8").read()
+            html = html.replace('href="styles.css"', f'href="styles.css?v={ver}"')
+            html = html.replace('src="data.js"', f'src="data.js?v={ver}"')
+            html = html.replace('src="app.js"', f'src="app.js?v={ver}"')
+            open(os.path.join(DOCS, name), "w", encoding="utf-8").write(html)
+        else:
             shutil.copy(src, os.path.join(DOCS, name))
-            print(f"[ok] docs/{name}")
+        print(f"[ok] docs/{name}")
     print("[done] site generated")
 
 
