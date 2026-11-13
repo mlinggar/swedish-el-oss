@@ -251,8 +251,12 @@
           </div>
         </div>
         <div class="well" data-reveal style="margin-top:16px">
-          <div class="well-head"><p class="ctitle">Average price by day of week</p><p class="small">SEK/kWh</p></div>
-          <div id="dow-chart" class="chart short" role="img" aria-label="Average spot price by day of week"></div>
+          <div class="well-head"><p class="ctitle" id="plan-chart-title">Average price by day of week</p><p class="small">SEK/kWh</p></div>
+          <div class="view-seg" id="plan-view-seg" role="group" aria-label="Chart view">
+            <button type="button" data-v="dow" aria-pressed="true">Day of week</button>
+            <button type="button" data-v="hour" aria-pressed="false">Hour of day</button>
+          </div>
+          <div id="dow-chart" class="chart short" role="img" aria-label="Average spot price"></div>
         </div>
       </div>
     </section>

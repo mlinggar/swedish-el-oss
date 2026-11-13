@@ -152,6 +152,18 @@ def gather():
         tmp[r["zone_id"]][int(r["mon"])] = f(r["v"])
     for z in zones:
         out["plan"][z]["month_avg"] = [tmp[z].get(i) for i in range(1, 13)]
+    # hourly average price (last 90 days) — the "hour of day" view
+    for z in zones:
+        prof = [None] * 24
+        for r in rows(cur, """SELECT extract(hour from ts_local)::int AS h,
+                  round(avg(price_sek_kwh)::numeric, 3) AS p
+           FROM silver.entsoe_timeseries
+           WHERE bidding_zone = %s AND price_sek_kwh IS NOT NULL AND ts_local >= %s
+           GROUP BY 1 ORDER BY 1""", (z, win)):
+            if r["h"] is not None and 0 <= int(r["h"]) < 24:
+                prof[int(r["h"])] = f(r["p"], 3)
+        out["plan"][z]["hourly"] = prof
+
     # cheapest hour: the most common cheapest hour over the last month (mode)
     for r in rows(cur, """SELECT zone_id, mode() WITHIN GROUP (ORDER BY cheapest_hour_local) h
        FROM gold.fact_daily WHERE date_local >= %s GROUP BY zone_id""",

@@ -27,6 +27,7 @@
 
   var zone = "SE4";
   var dvKey = "wind_now";
+  var planView = "dow";
   var charts = {};
 
   function el(id) {
@@ -201,18 +202,23 @@
     dow.forEach(function (v, i) { if (v != null && v < minV) { minV = v; minI = i; } });
     $("#plan-cheapday").textContent = minI >= 0 ? names[minI] : "—";
 
-    var vals = dow.filter(function (v) { return v != null; });
-    var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+    var isHour = planView === "hour";
+    var vals = isHour ? (p.hourly || []) : dow;
+    var labels = isHour ? vals.map(function (v, h) { return ("0" + h).slice(-2) + ":00"; }) : names;
+    $("#plan-chart-title").textContent = isHour ? "Average price by hour of day" : "Average price by day of week";
+
+    var finite = vals.filter(function (v) { return v != null; });
+    var lo = Math.min.apply(null, finite), hi = Math.max.apply(null, finite);
     var chart = el("dow-chart");
     if (chart) chart.setOption({
       animation: !reduce, grid: { left: 6, right: 10, top: 12, bottom: 4, containLabel: true },
       tooltip: { valueFormatter: function (v) { return fmt(v, 3) + " SEK/kWh"; } },
-      xAxis: { type: "category", data: names, axisLine: { lineStyle: { color: C.line } }, axisLabel: { color: C.muted, fontSize: 11 }, axisTick: { show: false } },
+      xAxis: { type: "category", data: labels, axisLine: { lineStyle: { color: C.line } }, axisLabel: { color: C.muted, fontSize: 11 }, axisTick: { show: false } },
       yAxis: { type: "value", scale: true, splitLine: { lineStyle: { color: C.line } }, axisLabel: { color: C.muted, fontSize: 11 } },
       series: [{
-        name: "Avg spot", type: "bar", barWidth: "56%",
-        data: dow.map(function (v, i) {
-          var t = hi > lo ? (v - lo) / (hi - lo) : 0;
+        name: "Avg spot", type: "bar", barWidth: isHour ? "52%" : "56%",
+        data: vals.map(function (v) {
+          var t = (hi > lo && v != null) ? (v - lo) / (hi - lo) : 0;
           return { value: v, itemStyle: { color: ramp(t), borderRadius: [6, 6, 0, 0] } };
         })
       }]
@@ -472,12 +478,24 @@
     setTimeout(revealAll, 1200); // safety: never leave content hidden
   }
 
+  function initPlanView() {
+    var seg = $("#plan-view-seg"); if (!seg) return;
+    seg.querySelectorAll("button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        seg.querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+        planView = b.getAttribute("data-v");
+        renderPlan();
+      });
+    });
+  }
+
   // ---- boot ----
   renderAll();
   renderDvSeg();
   initFinder();
   initEstimator();
   initSlicer();
+  initPlanView();
   initMotion();
   window.addEventListener("resize", function () {
     Object.keys(charts).forEach(function (k) { charts[k].resize(); });

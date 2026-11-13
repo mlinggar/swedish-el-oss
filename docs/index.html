@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=3503dbe7b4">
+  <link rel="stylesheet" href="styles.css?v=33ed7ed715">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -251,8 +251,12 @@
           </div>
         </div>
         <div class="well" data-reveal style="margin-top:16px">
-          <div class="well-head"><p class="ctitle">Average price by day of week</p><p class="small">SEK/kWh</p></div>
-          <div id="dow-chart" class="chart short" role="img" aria-label="Average spot price by day of week"></div>
+          <div class="well-head"><p class="ctitle" id="plan-chart-title">Average price by day of week</p><p class="small">SEK/kWh</p></div>
+          <div class="view-seg" id="plan-view-seg" role="group" aria-label="Chart view">
+            <button type="button" data-v="dow" aria-pressed="true">Day of week</button>
+            <button type="button" data-v="hour" aria-pressed="false">Hour of day</button>
+          </div>
+          <div id="dow-chart" class="chart short" role="img" aria-label="Average spot price"></div>
         </div>
       </div>
     </section>
@@ -342,8 +346,8 @@
     </div>
   </footer>
 
-  <script src="data.js?v=3503dbe7b4" defer></script>
+  <script src="data.js?v=33ed7ed715" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js" defer></script>
-  <script src="app.js?v=3503dbe7b4" defer></script>
+  <script src="app.js?v=33ed7ed715" defer></script>
 </body>
 </html>
