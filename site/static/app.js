@@ -92,8 +92,13 @@
     };
   }
 
-  // ---- trend chart filter (year / quarter / month / measure) ----
-  var trendFilter = { year: "all", quarter: "all", month: "all", measure: "spot" };
+  // ---- trend chart filter (year / quarter / month / measure); defaults to the recent month ----
+  var trendFilter = (function () {
+    var latest = (D.meta && D.meta.latest_date) || "";
+    var y = +latest.slice(0, 4), m = +latest.slice(5, 7);
+    if (!y || !m) { var now = new Date(); y = now.getFullYear(); m = now.getMonth() + 1; }
+    return { year: String(y), quarter: String(Math.ceil(m / 3)), month: String(m), measure: "spot" };
+  })();
 
   function renderHero() {
     var c = el("hero-chart"); if (c) c.setOption(lineOption(zone, { windowDays: 120 }), true);
@@ -109,6 +114,7 @@
     document.querySelectorAll("#trend-slicer .seg").forEach(function (seg) {
       var key = seg.getAttribute("data-filter");
       seg.querySelectorAll("button").forEach(function (b) {
+        b.setAttribute("aria-pressed", String(b.getAttribute("data-v") === trendFilter[key]));
         b.addEventListener("click", function () {
           seg.querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
           trendFilter[key] = b.getAttribute("data-v");
@@ -117,7 +123,10 @@
       });
     });
     var sm = $("#slicer-month");
-    if (sm) sm.addEventListener("change", function () { trendFilter.month = sm.value; renderTrend(); });
+    if (sm) {
+      sm.value = trendFilter.month;
+      sm.addEventListener("change", function () { trendFilter.month = sm.value; renderTrend(); });
+    }
   }
 
   // ---- hero now numbers ----
