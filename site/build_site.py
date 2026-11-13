@@ -204,12 +204,16 @@ def gather():
         else cur_month.replace(month=cur_month.month + 1)
     mlabel = lambda d: d.strftime("%B %Y")
     bill_est = {"monthly": {z: {} for z in zones}, "forecast": {z: {} for z in zones}}
+    nxt2_month = (nxt_month.replace(year=nxt_month.year + 1, month=1) if nxt_month.month == 12
+                  else nxt_month.replace(month=nxt_month.month + 1))
     for z in zones:
         for r in rows(cur, """SELECT to_char(date_trunc('month', date_local),'YYYY-MM') AS mon,
                   avg(total_consumer_sek_kwh) AS price
            FROM gold.fact_daily WHERE zone_id = %s AND date_local >= %s GROUP BY 1 ORDER BY 1""",
                      (z, latest - dt.timedelta(days=365))):
             bill_est["monthly"][z][r["mon"]] = f(r["price"], 3)
+        months = []
+        # current month: actual so far + forecast remaining
         r = rows(cur, """WITH days AS (
              SELECT total_consumer_sek_kwh AS bill FROM gold.fact_daily
              WHERE zone_id = %s AND date_local >= date_trunc('month', %s::date) AND date_local <= %s
@@ -218,12 +222,20 @@ def gather():
              WHERE zone = %s AND is_forecast AND target_date > %s
                AND target_date < date_trunc('month', %s::date) + interval '1 month')
            SELECT avg(bill) AS price FROM days""", (z, latest, latest, z, latest, latest))
-        bill_est["forecast"][z]["current"] = {"price": f(r[0]["price"], 3), "label": mlabel(cur_month)}
-        r = rows(cur, """SELECT total_bill_sek_kwh AS p, total_bill_p10_sek_kwh AS p10, total_bill_p90_sek_kwh AS p90
-           FROM gold.price_forecast_summary WHERE zone = %s AND horizon = 'next-month'""", (z,))
-        if r:
-            bill_est["forecast"][z]["next"] = {"price": f(r[0]["p"], 3), "p10": f(r[0]["p10"], 3),
-                                               "p90": f(r[0]["p90"], 3), "label": mlabel(nxt_month)}
+        months.append({"label": mlabel(cur_month), "price": f(r[0]["price"], 3), "p10": None, "p90": None})
+        # next two months: pure forecast
+        for mstart in (nxt_month, nxt2_month):
+            mend = (mstart.replace(year=mstart.year + 1, month=1) if mstart.month == 12
+                    else mstart.replace(month=mstart.month + 1))
+            r = rows(cur, """SELECT round(avg(total_bill_sek_kwh)::numeric,3) AS p,
+                    round(avg(total_bill_p10_sek_kwh)::numeric,3) AS p10,
+                    round(avg(total_bill_p90_sek_kwh)::numeric,3) AS p90
+               FROM gold.price_forecast
+               WHERE zone = %s AND is_forecast AND target_date >= %s AND target_date < %s""",
+                     (z, mstart, mend))
+            months.append({"label": mlabel(mstart), "price": f(r[0]["p"], 3),
+                           "p10": f(r[0]["p10"], 3), "p90": f(r[0]["p90"], 3)})
+        bill_est["forecast"][z]["months"] = months
     out["bill_est"] = bill_est
 
     conn.close()

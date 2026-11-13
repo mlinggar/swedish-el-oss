@@ -382,14 +382,14 @@
     var be = D.bill_est, out = $("#est-result"); if (!be || !out) return;
     var active = document.querySelector(".est-mode button[aria-pressed='true']");
     var mode = active ? active.getAttribute("data-mode") : "bill";
-    var usage = 0;
+    var usage = 0, period = 1;
     if (mode === "usage") {
       var uv = parseFloat($("#est-usage").value) || 0;
-      var up = parseInt($("#est-usage-period").value, 10) || 1;
-      usage = uv / up;
+      period = parseInt($("#est-usage-period").value, 10) || 1;
+      usage = uv / period;
     } else {
       var bill = parseFloat($("#est-bill").value) || 0;
-      var period = parseInt($("#est-period").value, 10) || 1;
+      period = parseInt($("#est-period").value, 10) || 1;
       var mp = (be.monthly || {})[zone] || {};
       var keys = Object.keys(mp).sort();
       var complete = keys.slice(0, -1);
@@ -401,13 +401,26 @@
       out.innerHTML = '<p class="est-hint">Enter your ' + (mode === "usage" ? "monthly usage" : "last bill") + ' to see an estimate.</p>';
       return;
     }
-    var fc = (be.forecast || {})[zone] || {}, cur = fc.current || {}, nxt = fc.next || {};
-    out.innerHTML =
-      '<div class="est-row"><div><p class="est-k">' + (cur.label || "This month") + '</p><p class="est-sub">at ' + fmt(cur.price, 2) + ' SEK/kWh</p></div>' +
-      '<p class="est-v tnum">' + fmt(usage * (cur.price || 0), 0) + '<small>SEK</small></p></div>' +
-      '<div class="est-row"><div><p class="est-k">' + (nxt.label || "Next month") + '</p><p class="est-sub">at ' + fmt(nxt.price, 2) + ' SEK/kWh · range ' + fmt(usage * (nxt.p10 || 0), 0) + '–' + fmt(usage * (nxt.p90 || 0), 0) + '</p></div>' +
-      '<p class="est-v tnum">' + fmt(usage * (nxt.price || 0), 0) + '<small>SEK</small></p></div>' +
-      '<p class="est-usage">Based on about ' + fmt(usage, 0) + ' kWh per month in ' + zone + '. Assumptions: steady usage, no fixed grid fee.</p>';
+    var months = ((be.forecast || {})[zone] || {}).months || [];
+    var n = (period >= 3) ? 3 : 2;   // a quarterly bill is forecast for 3 months
+    var shown = months.slice(0, n);
+    var html = shown.map(function (m) {
+      var range = (m.p10 != null && m.p90 != null)
+        ? ' · range ' + fmt(usage * m.p10, 0) + '–' + fmt(usage * m.p90, 0) : '';
+      return '<div class="est-row"><div><p class="est-k">' + (m.label || "") + '</p>' +
+        '<p class="est-sub">at ' + fmt(m.price, 2) + ' SEK/kWh' + range + '</p></div>' +
+        '<p class="est-v tnum">' + fmt(usage * (m.price || 0), 0) + '<small>SEK</small></p></div>';
+    }).join("");
+    if (n >= 3) {
+      var total = shown.reduce(function (s, m) { return s + usage * (m.price || 0); }, 0);
+      html += '<div class="est-row est-total"><div><p class="est-k">Next ' + n + ' months</p>' +
+        '<p class="est-sub">estimated total</p></div>' +
+        '<p class="est-v tnum">' + fmt(total, 0) + '<small>SEK</small></p></div>';
+    }
+    html += '<p class="est-usage">Based on about ' + fmt(usage, 0) + ' kWh per month in ' + zone + '. Assumptions: steady usage, no fixed grid fee.</p>';
+    out.innerHTML = html;
+    var h2 = $("#est-h2");
+    if (h2) h2.textContent = (n >= 3) ? "What will you pay over the next " + n + " months?" : "What will you pay this month and next?";
   }
   function initEstimator() {
     var go = $("#est-go"); if (!go) return;
