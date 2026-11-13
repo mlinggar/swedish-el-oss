@@ -284,6 +284,9 @@ footer li { padding: 3px 0; font-size: 14px; }
 .chart-note { margin-top: 14px; color: var(--muted); font-size: 14px; line-height: 1.55; }
 .chart-note strong { color: var(--ink); font-weight: 600; }
 .chart-note .take { margin: 9px 0 0; }
+.chart-note ul.reasons { margin: 10px 0 0; padding-left: 20px; }
+.chart-note ul.reasons li { margin: 9px 0; }
+.chart-note .src { margin: 12px 0 0; font-size: 12.5px; }
 
 /* ---------- trend slicer (year / quarter / month / measure) ---------- */
 .slicer { display: flex; flex-wrap: wrap; gap: 14px 22px; margin: 6px 0 18px; align-items: center; }

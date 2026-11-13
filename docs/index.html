@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=33ed7ed715">
+  <link rel="stylesheet" href="styles.css?v=a0cacb65ab">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -273,6 +273,27 @@
         <div class="well" data-reveal>
           <div class="well-head"><p class="ctitle">Spot price by zone</p><p class="small">Latest day · SEK/kWh</p></div>
           <div class="zone-bars" id="zone-bars"></div>
+          <div class="chart-note">
+            <p><strong>Why is the north cheaper than the south?</strong> An electricity price comes
+              down to three things: how much cheap power an area makes, how much it uses, and how
+              well the grid can move power between areas.</p>
+            <ul class="reasons">
+              <li><strong>The north makes more cheap power than it needs.</strong> Northern Sweden is
+                full of hydropower (rivers and dams) that produces electricity very cheaply. The north
+                uses only a fraction of it, and that surplus keeps the price low.</li>
+              <li><strong>The south uses more than it makes.</strong> More people and industry live in
+                southern Sweden, but it has far less cheap generation. So it needs more electricity
+                than it can produce locally.</li>
+              <li><strong>The power lines are the bottleneck.</strong> Cheap electricity has to travel
+                south through the grid, but the lines between north and south have limited capacity.
+                When they fill up, the south cannot get enough cheap power and turns to more expensive
+                sources and imports, which pushes its price up.</li>
+            </ul>
+            <p class="take">That is why SE1 and SE2 in the north are usually cheapest, and SE3 and SE4
+              in the south cost more. The gap shifts day to day with weather, demand and how full the
+              lines are.</p>
+            <p class="src">Based on Energy Education (energyeducation.se), using Nord Pool.</p>
+          </div>
         </div>
       </div>
     </section>
@@ -346,8 +367,8 @@
     </div>
   </footer>
 
-  <script src="data.js?v=33ed7ed715" defer></script>
+  <script src="data.js?v=a0cacb65ab" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js" defer></script>
-  <script src="app.js?v=33ed7ed715" defer></script>
+  <script src="app.js?v=a0cacb65ab" defer></script>
 </body>
 </html>
