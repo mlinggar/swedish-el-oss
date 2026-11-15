@@ -1,12 +1,29 @@
-{{ config(materialized='table', schema='silver') }}
-with deduped as (
+{{ config(materialized='incremental', incremental_strategy='delete+insert',
+          unique_key='_key', schema='silver') }}
+with src as (
+    select f.*,
+           md5(coalesce(zone, '~') || '|' || coalesce(reference_time::text, '~') || '|'
+               || coalesce(forecast_ts::text, '~')) as _key,
+           0 as _prio,
+           file_modification_time as _fmod
+    from {{ ref('smhi_forecast_points') }} f
+),
+new_rows as (
+    select * from src s
+    {% if is_incremental() %}
+    where s._fmod > (select coalesce(max(_fmod), '-infinity')::timestamptz from {{ this }})
+      and not exists (
+          select 1 from {{ this }} t
+          where t._key = s._key
+            and (t._prio < s._prio or (t._prio = s._prio and t._fmod > s._fmod)))
+    {% endif %}
+),
+deduped as (
     select * from (
-        select f.*,
-               row_number() over (
-                   partition by zone, reference_time, forecast_ts
-                   order by file_modification_time desc) as rn
-        from {{ ref('smhi_forecast_points') }} f
-    ) t where rn = 1
+        select s.*,
+               row_number() over (partition by s._key order by s._prio asc, s._fmod desc) as rn
+        from new_rows s
+    ) x where rn = 1
 )
 select
     zone, reference_time,
@@ -20,5 +37,6 @@ select
     nullif(trim(data_map->>'cloud_area_fraction'), '')::numeric      as cloud_area_fraction,
     lat, lon, source_file, load_tier,
     extract(year from forecast_ts)::int           as obs_year,
-    now() as silver_generated_at
+    now() as silver_generated_at,
+    _key, _prio, _fmod
 from deduped

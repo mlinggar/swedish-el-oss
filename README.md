@@ -75,7 +75,7 @@ The pipeline enforces strict design rules: idempotent writes at every layer, raw
 ### Silver Layer (`silver.*`) — Typed & Cleaned
 
 * **Goal:** Analysis-ready time-series.
-* **Transformations:** Full-refresh dbt models. Type columns, cast `ts_utc`/`ts_local` (Europe/Stockholm), deduplicate (newest `file_modification_time`; archive over daily snapshots), convert units and currency. History window is strictly **2022-01-01 → today**.
+* **Transformations:** Incremental dbt models (`delete+insert` on a surrogate `_key`, newest `file_modification_time` wins) — except `consumer_prices`, which stays a full-refresh table because it pivots measures and expands periods into monthly rows. Type columns, cast `ts_utc`/`ts_local` (Europe/Stockholm), deduplicate (newest `file_modification_time`; archive over daily snapshots), convert units and currency. History window is strictly **2022-01-01 → today**.
 * **Key conversions:** `price_sek_kwh = value (EUR/MWh) / 1000 × eur_sek_rate`; consumer prices `*_sek_kwh = *_ore_kwh / 100`; gas `÷ 293.071` (MMBtu→kWh).
 * **Tables:** `entsoe_timeseries`, `fx_rates_daily`, `gas_prices_daily`, `consumer_prices`, `weather_forecast_hourly`, `weather_observations_hourly`, `smhi_hydro_observations_daily`.
 

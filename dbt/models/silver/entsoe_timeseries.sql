@@ -1,15 +1,34 @@
-{{ config(materialized='table', schema='silver') }}
-with deduped as (
+{{ config(materialized='incremental', incremental_strategy='delete+insert',
+          unique_key='_key', schema='silver') }}
+with src as (
+    select e.*,
+           md5(coalesce(substring(source_file from '/(SE[1-4])/'), '~') || '|'
+               || coalesce(data_item_code, '~') || '|'
+               || coalesce(business_dim->>'PRODUCTION_TYPE', '~') || '|'
+               || coalesce(point_ts_utc::text, '~') || '|'
+               || coalesce(resolution, '~')) as _key,
+           0 as _prio,
+           file_modification_time as _fmod
+    from {{ ref('entsoe_points') }} e
+),
+new_rows as (
+    select * from src s
+    {% if is_incremental() %}
+    where s._fmod > (select coalesce(max(_fmod), '-infinity')::timestamptz from {{ this }})
+      and not exists (
+          select 1 from {{ this }} t
+          where t._key = s._key
+            and (t._prio < s._prio or (t._prio = s._prio and t._fmod > s._fmod)))
+    {% endif %}
+),
+deduped as (
     select * from (
-        select e.*,
-               row_number() over (
-                   partition by substring(source_file from '/(SE[1-4])/'),
-                                 data_item_code, business_dim->>'PRODUCTION_TYPE',
-                                 point_ts_utc, resolution
-                   order by file_modification_time desc) as rn
-        from {{ ref('entsoe_points') }} e
-    ) t where rn = 1
-), base as (
+        select s.*,
+               row_number() over (partition by s._key order by s._prio asc, s._fmod desc) as rn
+        from new_rows s
+    ) x where rn = 1
+),
+base as (
     select
         substring(source_file from '/(SE[1-4])/')       as bidding_zone,
         case data_item_code
@@ -26,16 +45,19 @@ with deduped as (
         nullif(trim(value_1), '')::numeric               as value,
         nullif(trim(value_2), '')::numeric               as value_secondary,
         source_file, load_tier,
-        extract(year from point_ts_utc)::int            as obs_year
+        extract(year from point_ts_utc)::int            as obs_year,
+        _key, _prio, _fmod
     from deduped
-), fx as (
+),
+fx as (
     select obs_date as fx_date, nullif(trim(rate), '')::numeric as eur_sek
     from (select * from (
             select f.*, row_number() over (
                 partition by currency, obs_date order by file_modification_time desc) as rn
             from {{ ref('ecb_fx_rates') }} f) x where rn = 1) t
     where currency = 'SEK'
-), fx_first as (select eur_sek from fx order by fx_date asc limit 1)
+),
+fx_first as (select eur_sek from fx order by fx_date asc limit 1)
 select
     b.*,
     case when b.metric = 'day_ahead_price' then f.eur_sek end       as eur_sek_rate,

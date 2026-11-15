@@ -4,6 +4,10 @@ Silver de-duplicates bronze (keeping the newest `file_modification_time`), types
 applies the unit / currency conversions. This is where prices become SEK/kWh.
 
 ## Conventions
+- **Incremental:** most silver models run as `delete+insert` on a surrogate `_key` (the natural key),
+  keeping the newest `file_modification_time`, so re-stated data replaces the old. `hydro` and
+  `weather_observations` prefer the archive source over daily; `consumer_prices` stays a full-refresh
+  table (it pivots measures and expands periods into monthly rows).
 - **`price_sek_kwh = value (EUR/MWh) / 1000.0 × eur_sek_rate`** — MWh→kWh, EUR→SEK.
 - **`*_sek_kwh = *_ore_kwh / 100.0`** — SCB prices arrive in öre/kWh.
 - `ts_local` = `ts_utc at time zone 'Europe/Stockholm'`.
