@@ -167,7 +167,7 @@ TEMPLATE = r"""<!doctype html>
         <p class="small">Adjust your comfort setpoint and the outdoor temperature.</p>
         <div class="field">
           <label for="setpoint">Comfort setpoint</label>
-          <div class="row"><input id="setpoint" type="range" min="19" max="23" step="0.5" value="21">
+          <div class="row"><input id="setpoint" type="range" min="0" max="30" step="0.5" value="21">
             <span class="val" id="setpoint-val">21.0 °C</span></div>
         </div>
         <div class="field">
@@ -322,9 +322,15 @@ TEMPLATE = r"""<!doctype html>
 def main():
     data = gather()
     html = TEMPLATE.replace("__PAYLOAD__", json.dumps(data, separators=(",", ":")))
-    with open(OUT, "w") as fh:
-        fh.write(html)
-    print(f"[ok] {OUT} ({os.path.getsize(OUT)/1024:.0f} KB)")
+    outs = [
+        os.path.join(REPO, "docs", "warm-your-home-for-less-demo.html"),
+        os.path.join(REPO, "proposals", "warm-your-home-for-less-demo.html"),
+    ]
+    for out in outs:
+        os.makedirs(os.path.dirname(out), exist_ok=True)
+        with open(out, "w") as fh:
+            fh.write(html)
+        print(f"[ok] {out} ({os.path.getsize(out)/1024:.0f} KB)")
     for z in ZONES:
         h = data["hourly"][z]
         print(f"    {z}: {len([x for x in h if x is not None])}/24 hourly prices, "
