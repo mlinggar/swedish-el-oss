@@ -382,6 +382,31 @@ footer li { padding: 3px 0; font-size: 14px; }
 .view-seg button:hover { color: var(--ink); }
 .view-seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(12,18,23,0.06); }
 
+/* ---------- site navbar ---------- */
+.site-nav { display: none; gap: 22px; }
+.site-nav a {
+  font-family: var(--f-display); font-size: 13.5px; font-weight: 500;
+  color: var(--muted); text-decoration: none;
+  transition: color 0.2s var(--ease);
+}
+.site-nav a:hover, .site-nav a.active { color: var(--ink); }
+@media (min-width: 960px) { .site-nav { display: flex; } }
+
+/* ---------- warm your home for less ---------- */
+.warm-grid { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: start; }
+@media (min-width: 900px) { .warm-grid { grid-template-columns: 1.1fr .9fr; } }
+.win { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.chip { font-family: var(--f-display); font-size: 13px; font-weight: 500; padding: 7px 13px; border-radius: var(--r-pill); }
+.chip.good { background: rgba(46, 139, 111, .12); color: #1f6b52; }
+.chip.bad { background: rgba(192, 57, 43, .1); color: #b02818; }
+.field .row { display: flex; align-items: center; gap: 14px; }
+.field .val { font-family: var(--f-display); font-weight: 600; font-size: 18px; min-width: 74px; text-align: right; }
+input[type=range] { flex: 1; accent-color: var(--accent); }
+.cost-out { background: var(--ground); border-radius: 10px; padding: 18px 20px; margin-top: 6px; }
+.cost-out .big { font-family: var(--f-display); font-weight: 700; font-size: 40px; letter-spacing: -0.02em; margin: 2px 0; }
+.cost-out .big small { font-size: 15px; color: var(--muted); font-weight: 500; margin-left: 5px; }
+.cost-out .sub { font-size: 13px; color: var(--muted); margin: 6px 0 0; }
+
 /* ---------- reveal (motion) ---------- */
 [data-reveal] { transition: opacity 0.7s var(--ease), transform 0.7s var(--ease); }
 .js-motion [data-reveal]:not(.is-in) { opacity: 0; transform: translateY(18px); }

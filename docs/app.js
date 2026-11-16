@@ -338,9 +338,68 @@
     });
   }
 
+  // ---- warm your home for less (heating load-shifting) ----
+  var HEAT = { ua: 1.0, cop: 3.0 };   // assumed home heat-loss + heat-pump COP
+
+  function heatWindow(prices) {
+    var best = { sum: Infinity, from: 0, to: 0 };
+    for (var s = 0; s < 24; s++) {
+      var sum = 0;
+      for (var k = 0; k < 6; k++) sum += prices[(s + k) % 24];
+      if (sum < best.sum) best = { sum: sum, from: s, to: (s + 6) % 24 };
+    }
+    return best;
+  }
+
+  function renderWarmCost() {
+    var set = parseFloat($("#warm-setpoint").value), t = parseFloat($("#warm-outtemp").value);
+    var price = (D.now[zone] || {}).bill;
+    $("#warm-setpoint-val").textContent = fmt(set, 1) + " °C";
+    $("#warm-outtemp-val").textContent = fmt(t, 1) + " °C";
+    var kwh = HEAT.ua * Math.max(0, set - t) / HEAT.cop;
+    $("#warm-cost").textContent = fmt(kwh * price, 0);
+    $("#warm-kwh").textContent = fmt(kwh, 1);
+    $("#warm-price").textContent = fmt(price, 2);
+    $("#warm-save").textContent = "Each degree lower on the setpoint saves about " + fmt(HEAT.ua / HEAT.cop * price, 1) + " SEK/day.";
+  }
+
+  function renderWarm() {
+    var prof = (D.plan[zone] || {}).hourly || [];
+    $("#warm-zone").textContent = zone;
+    if (!prof.length) return;
+    var lo = Math.min.apply(null, prof), hi = Math.max.apply(null, prof);
+    var c = el("warm-chart");
+    if (c) c.setOption({
+      animation: !reduce, grid: { left: 6, right: 10, top: 12, bottom: 4, containLabel: true },
+      tooltip: { valueFormatter: function (v) { return fmt(v, 3) + " SEK/kWh"; } },
+      xAxis: { type: "category", data: prof.map(function (v, h) { return ("0" + h).slice(-2) + ":00"; }),
+               axisLine: { lineStyle: { color: C.line } }, axisLabel: { color: C.muted, fontSize: 11 }, axisTick: { show: false } },
+      yAxis: { type: "value", scale: true, splitLine: { lineStyle: { color: C.line } }, axisLabel: { color: C.muted, fontSize: 11 } },
+      series: [{
+        name: "Spot", type: "bar", barWidth: "62%",
+        data: prof.map(function (v) {
+          var t = (hi > lo && v != null) ? (v - lo) / (hi - lo) : 0;
+          return { value: v, itemStyle: { color: ramp(t), borderRadius: [5, 5, 0, 0] } };
+        })
+      }]
+    }, true);
+    var w = heatWindow(prof);
+    $("#warm-chips").innerHTML =
+      '<span class="chip good">Best window to heat: ' + ("0" + w.from).slice(-2) + ':00 – ' + ("0" + w.to).slice(-2) + ':00</span>' +
+      '<span class="chip bad">Most expensive: ' + ("0" + prof.indexOf(hi)).slice(-2) + ':00 (' + fmt(hi, 2) + ')</span>';
+    $("#warm-note").innerHTML = "Shift heating into the <strong>green overnight window</strong> and coast through the expensive morning and evening peaks. The cheapest hours cost <strong>" + fmt(lo, 2) + " SEK/kWh</strong> against <strong>" + fmt(hi, 2) + "</strong> at the peak, a <strong>" + (hi / lo).toFixed(1) + "x</strong> swing in one day.";
+    renderWarmCost();
+  }
+
+  function initWarm() {
+    ["#warm-setpoint", "#warm-outtemp"].forEach(function (sel) {
+      var e = $(sel); if (e) e.addEventListener("input", renderWarmCost);
+    });
+  }
+
   function renderAll() {
     renderNow(); renderHero(); renderTrend(); renderHorizon();
-    renderBill(); renderPlan(); renderZones();
+    renderBill(); renderPlan(); renderZones(); renderWarm();
     renderDrivers(); renderCorr(); renderCorrNote(); renderDriverChart();
     Object.keys(charts).forEach(function (k) { charts[k].resize(); });
   }
@@ -496,6 +555,7 @@
   initEstimator();
   initSlicer();
   initPlanView();
+  initWarm();
   initMotion();
   window.addEventListener("resize", function () {
     Object.keys(charts).forEach(function (k) { charts[k].resize(); });

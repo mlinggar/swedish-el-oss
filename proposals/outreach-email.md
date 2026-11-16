@@ -20,7 +20,7 @@ I know this is a student project, but I'd love to hear whether this data layer c
 
 **Links**
 - Website: https://mlinggar.github.io/swedish-el-oss/
-- Warm-your-home demo: https://mlinggar.github.io/swedish-el-oss/warm-your-home-for-less-demo.html
+- Warm your home (section): https://mlinggar.github.io/swedish-el-oss/#warm-home
 - GitHub (code): https://github.com/mlinggar/swedish-el-oss
 
 Thanks for your time,

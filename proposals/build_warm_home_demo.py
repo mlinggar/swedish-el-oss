@@ -323,7 +323,6 @@ def main():
     data = gather()
     html = TEMPLATE.replace("__PAYLOAD__", json.dumps(data, separators=(",", ":")))
     outs = [
-        os.path.join(REPO, "docs", "warm-your-home-for-less-demo.html"),
         os.path.join(REPO, "proposals", "warm-your-home-for-less-demo.html"),
     ]
     for out in outs:

@@ -20,6 +20,13 @@
 
   <header class="frame">
     <div class="wordmark"><span class="dot" aria-hidden="true"></span>Swedish EL</div>
+    <nav class="site-nav" aria-label="Sections">
+      <a href="#trend">Price</a>
+      <a href="#bill">Bill</a>
+      <a href="#plan">Plan</a>
+      <a href="#warm-home">Warm your home</a>
+      <a href="#drivers">Drivers</a>
+    </nav>
     <nav class="zone-nav" aria-label="Bidding zone">
       <button type="button" data-zone="SE1" aria-pressed="false">SE1</button>
       <button type="button" data-zone="SE2" aria-pressed="false">SE2</button>
@@ -90,7 +97,7 @@
     </section>
 
     <!-- TREND: the signature chart -->
-    <section class="trend">
+    <section class="trend" id="trend">
       <div class="wrap">
         <div class="section-head" data-reveal>
           <p class="eyebrow">Price over time</p>
@@ -154,7 +161,7 @@
     </section>
 
     <!-- BILL -->
-    <section class="bill">
+    <section class="bill" id="bill">
       <div class="wrap">
         <div class="section-head" data-reveal>
           <p class="eyebrow">What you pay</p>
@@ -225,7 +232,7 @@
     </section>
 
     <!-- PLAN -->
-    <section class="plan">
+    <section class="plan" id="plan">
       <div class="wrap">
         <div class="section-head" data-reveal>
           <p class="eyebrow">Plan your use</p>
@@ -257,6 +264,57 @@
             <button type="button" data-v="hour" aria-pressed="false">Hour of day</button>
           </div>
           <div id="dow-chart" class="chart short" role="img" aria-label="Average spot price"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WARM: warm your home for less -->
+    <section class="warm" id="warm-home">
+      <div class="wrap">
+        <div class="section-head" data-reveal>
+          <p class="eyebrow">Warm your home for less</p>
+          <h2>Heat with cheap electricity</h2>
+          <p class="lede">Heating is your biggest winter cost, and prices swing through the day.
+            Heat when power is cheap and coast when it is not.</p>
+        </div>
+        <div class="warm-grid">
+          <div class="well" data-reveal>
+            <div class="well-head">
+              <p class="ctitle">When to heat</p>
+              <p class="small">typical day · spot price SEK/kWh · <span id="warm-zone">SE4</span></p>
+            </div>
+            <div id="warm-chart" class="chart" role="img" aria-label="Typical hourly price, cheap to expensive"></div>
+            <div class="win" id="warm-chips"></div>
+            <p class="chart-note" id="warm-note"></p>
+          </div>
+          <div class="well" data-reveal>
+            <div class="well-head">
+              <p class="ctitle">What heating costs</p>
+              <p class="small">adjust the sliders</p>
+            </div>
+            <div class="field">
+              <label for="warm-setpoint">Comfort setpoint</label>
+              <div class="row">
+                <input id="warm-setpoint" type="range" min="0" max="30" step="0.5" value="21">
+                <span class="val" id="warm-setpoint-val">21.0 °C</span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="warm-outtemp">Outdoor temperature</label>
+              <div class="row">
+                <input id="warm-outtemp" type="range" min="-15" max="15" step="0.5" value="-5">
+                <span class="val" id="warm-outtemp-val">-5.0 °C</span>
+              </div>
+            </div>
+            <div class="cost-out">
+              <p class="small" style="margin:0">Heating adds about</p>
+              <p class="big"><span id="warm-cost">—</span><small>SEK / day</small></p>
+              <p class="sub"><span id="warm-kwh">—</span> kWh/day · at <span id="warm-price">—</span> SEK/kWh</p>
+              <p class="sub" id="warm-save"></p>
+            </div>
+            <p class="chart-note">Assumes a typical home and a heat pump (COP 3). Each degree lower
+              on the setpoint saves energy.</p>
+          </div>
         </div>
       </div>
     </section>
@@ -299,7 +357,7 @@
     </section>
 
     <!-- DRIVERS: what moves the price -->
-    <section class="drivers">
+    <section class="drivers" id="drivers">
       <div class="wrap">
         <div class="section-head" data-reveal>
           <p class="eyebrow">What moves the price</p>
