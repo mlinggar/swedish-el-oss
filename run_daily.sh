@@ -13,7 +13,7 @@ echo "=== run started $(date) ==="
 # 1. ingest (daily mode, 7 free sources)
 for s in ecb eia scb entsoe forecast hydro metobs; do
   echo "--- ingest $s ---"
-  python -m ingest.$s
+  python -m ingest.$s || echo "[warn] ingest $s failed; continuing (as-of carries the gap)"
 done
 
 # 2. dbt: seed + bronze (incremental) + silver/gold (full) + tests

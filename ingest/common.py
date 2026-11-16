@@ -34,7 +34,7 @@ def get_conn():
     return psycopg2.connect(**kwargs)
 
 
-def fetch(url, method="GET", body=None, headers=None, timeout=90, retries=3):
+def fetch(url, method="GET", body=None, headers=None, timeout=90, retries=5):
     """GET/POST with exponential backoff; strips a UTF-8 BOM. Returns text."""
     hdrs = {"User-Agent": USER_AGENT}
     if headers:
