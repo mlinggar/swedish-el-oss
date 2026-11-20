@@ -359,10 +359,12 @@
     $("#warm-setpoint-val").textContent = fmt(set, 1) + " °C";
     $("#warm-outtemp-val").textContent = fmt(t, 1) + " °C";
     var kwh = HEAT.ua * Math.max(0, set - t) / HEAT.cop;
-    $("#warm-cost").textContent = fmt(kwh * price, 0);
+    var daily = kwh * price, saveDay = HEAT.ua / HEAT.cop * price;
+    $("#warm-cost").textContent = fmt(daily, 0);
+    $("#warm-cost-month").textContent = fmt(daily * 30.4, 0);
     $("#warm-kwh").textContent = fmt(kwh, 1);
     $("#warm-price").textContent = fmt(price, 2);
-    $("#warm-save").textContent = "Each degree lower on the setpoint saves about " + fmt(HEAT.ua / HEAT.cop * price, 1) + " SEK/day.";
+    $("#warm-save").textContent = "Each degree lower on the setpoint saves about " + fmt(saveDay, 1) + " SEK/day (≈ " + fmt(saveDay * 30.4, 0) + " SEK/month).";
   }
 
   function renderWarm() {
