@@ -32,7 +32,7 @@ hist_spot as (
     select date_trunc('hour', ts_local) as ts_local, bidding_zone as zone, avg(price_sek_kwh) as spot_sek_kwh
     from {{ ref('entsoe_timeseries') }}
     where metric = 'day_ahead_price' and price_sek_kwh is not null
-      and bidding_zone in ('SE3', 'SE4')
+      and bidding_zone in ('SE1', 'SE2', 'SE3', 'SE4')
       and ts_local < date_trunc('hour', now())
     group by 1, 2
 ),
@@ -55,7 +55,7 @@ fc as (
     select distinct on (zone, date_trunc('hour', ts_local))
         date_trunc('hour', ts_local) as ts_local, zone, air_temperature as temp_c
     from {{ ref('weather_forecast_hourly') }}
-    where zone in ('SE3', 'SE4') and ts_local >= date_trunc('hour', now())
+    where zone in ('SE1', 'SE2', 'SE3', 'SE4') and ts_local >= date_trunc('hour', now())
     order by zone, date_trunc('hour', ts_local), reference_time desc
 ),
 fc_daily as (
@@ -66,7 +66,7 @@ fc_daily as (
         spot_p10_sek_kwh as daily_spot_p10,
         spot_p90_sek_kwh as daily_spot_p90
     from {{ source('ml', 'price_forecast') }}
-    where zone in ('SE3', 'SE4')
+    where zone in ('SE1', 'SE2', 'SE3', 'SE4')
     order by zone, target_date, lead_days asc
 ),
 forecast as (

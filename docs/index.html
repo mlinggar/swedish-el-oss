@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=3bb4a43d9a">
+  <link rel="stylesheet" href="styles.css?v=c2f0e90a2f">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -277,13 +277,14 @@
           <p class="lede">Heating is your biggest winter cost, and prices swing through the day.
             Heat when power is cheap and coast when it is not.</p>
         </div>
+        <div class="warm-alert" id="warm-alert" role="status" aria-live="polite" hidden></div>
         <div class="warm-grid">
           <div class="well" data-reveal>
             <div class="well-head">
               <p class="ctitle">When to heat</p>
-              <p class="small">typical day · spot price SEK/kWh · <span id="warm-zone">SE4</span></p>
+              <p class="small">next 24 hours · price you pay SEK/kWh · <span id="warm-zone">SE4</span></p>
             </div>
-            <div id="warm-chart" class="chart" role="img" aria-label="Typical hourly price, cheap to expensive"></div>
+            <div id="warm-chart" class="chart" role="img" aria-label="Next 24 hours price, cheap to expensive hours"></div>
             <div class="win" id="warm-chips"></div>
             <p class="chart-note" id="warm-note"></p>
           </div>
@@ -425,8 +426,8 @@
     </div>
   </footer>
 
-  <script src="data.js?v=3bb4a43d9a" defer></script>
+  <script src="data.js?v=c2f0e90a2f" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js" defer></script>
-  <script src="app.js?v=3bb4a43d9a" defer></script>
+  <script src="app.js?v=c2f0e90a2f" defer></script>
 </body>
 </html>

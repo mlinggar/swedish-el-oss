@@ -251,6 +251,34 @@ def gather():
         bill_est["forecast"][z]["months"] = months
     out["bill_est"] = bill_est
 
+    # ---- warm your home: hourly thermostat when-to-heat + expensive-day flag ----
+    out["warm"] = {}
+    for z in zones:
+        hourly = []
+        for r in rows(cur, """SELECT date_local, hour_of_day, is_forecast, bill_sek_kwh, heat_cost_sek,
+                   price_rank_in_day, is_cheapest_4h
+            FROM gold.thermostat_hourly
+            WHERE zone = %s AND ts_local >= date_trunc('hour', now())
+              AND ts_local < date_trunc('hour', now()) + interval '24 hours'
+            ORDER BY ts_local""", (z,)):
+            hourly.append({
+                "h": int(r["hour_of_day"]), "date": str(r["date_local"]),
+                "bill": f(r["bill_sek_kwh"], 3), "heat": f(r["heat_cost_sek"], 2),
+                "rank": r["price_rank_in_day"], "cheap": bool(r["is_cheapest_4h"]),
+                "fc": bool(r["is_forecast"]),
+            })
+        cmp = rows(cur, """SELECT avg(bill_sek_kwh) FILTER (WHERE date_local = current_date) AS today,
+                   avg(bill_sek_kwh) FILTER (WHERE date_local < current_date
+                      AND date_local >= current_date - 14) AS recent
+            FROM gold.thermostat_hourly WHERE zone = %s""", (z,))[0]
+        tb, rb = f(cmp["today"], 3), f(cmp["recent"], 3)
+        pct = round((tb - rb) / rb * 100, 1) if (tb is not None and rb) else None
+        out["warm"][z] = {
+            "hourly": hourly,
+            "today": {"bill": tb, "recent_bill": rb, "pct": pct,
+                      "expensive": bool(pct is not None and pct > 10)},
+        }
+
     conn.close()
     return out
 
