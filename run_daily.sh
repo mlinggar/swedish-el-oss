@@ -26,6 +26,10 @@ jupyter nbconvert --to notebook --execute \
   --output /tmp/price_forecast_last.ipynb \
   --ExecutePreprocessor.kernel_name=swedish-el ml/price_forecast.ipynb
 
+# 3b. rebuild thermostat_hourly now that gold.price_forecast is fresh (forecast branch feeds on it)
+echo "--- dbt rebuild thermostat_hourly (fresh forecast) ---"
+dbt build --select thermostat_hourly --project-dir dbt --profiles-dir dbt
+
 # 4. website (activates automatically once Module 6 exists)
 if [ -f site/build_site.py ]; then
   echo "--- website ---"

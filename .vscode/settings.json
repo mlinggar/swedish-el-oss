@@ -5,5 +5,18 @@
   "files.exclude": {
     "**/__pycache__": true,
     "**/.pytest_cache": true
-  }
+  },
+  "sqltools.connections": [
+    {
+      "ssh": "Disabled",
+      "previewLimit": 50,
+      "server": "localhost",
+      "port": 5432,
+      "driver": "PostgreSQL",
+      "name": "swedish_el",
+      "username": "mlinggar",
+      "database": "swedish_el",
+      "password": ""
+    }
+  ]
 }

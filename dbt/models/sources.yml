@@ -10,3 +10,7 @@ sources:
       - name: raw_smhi_metobs
       - name: raw_smhi_forecast
       - name: raw_smhi_hydro
+  - name: ml
+    schema: gold
+    tables:
+      - name: price_forecast
