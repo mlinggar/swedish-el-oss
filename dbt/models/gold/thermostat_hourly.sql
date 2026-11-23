@@ -1,6 +1,6 @@
 {{ config(materialized='table', schema='gold') }}
 
--- Hourly thermostat dataset (SE3/SE4): one row per hour x zone.
+-- Hourly thermostat dataset (SE1-SE4): one row per hour x zone.
 --   is_forecast=false -> actual past hours (silver actuals)
 --   is_forecast=true  -> predicted future hours (ML daily spot spread by the intraday
 --                        price shape, temp from the SMHI hourly forecast)

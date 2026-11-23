@@ -15,20 +15,20 @@ classDef product fill:#107C10,stroke:#fff,stroke-width:2px,color:#fff;
 A[External APIs / CSVs<br/>ENTSO-E · SMHI · ECB · EIA · SCB] -->|Python REST ingest/ · nightly 20:00| B
 B[(PostgreSQL 16: raw.*<br/>Verbatim JSON/XML/CSV)]:::storage -->|dbt: parsed, as-received, per-file replace| C
 C[bronze.*]:::compute -->|dbt: typed, cleaned, EUR→SEK, UTC/Local ts| D
-D[silver.*]:::compute -->|dbt: dims, fact_daily, drivers, gas| E
-E[(gold.*)]:::storage --> F
-E --> G
-E --> H
-F[sklearn price forecast<br/>price_forecast*]:::product
-G[Static site · GitHub Pages<br/>ECharts price tracker]:::product
-H[Metabase Analytics]:::product
+D[silver.*]:::compute -->|dbt: dims, fact_daily, drivers, gas, thermostat| E
+E[(gold.*)]:::storage -->|fact_daily| F[sklearn price forecast<br/>price_forecast]:::product
+D -->|hourly actuals| I[gold.thermostat_hourly<br/>hourly heat-cost + when-to-heat]:::product
+F -->|forecast × intraday shape| I
+E --> G[Static site · GitHub Pages<br/>ECharts tracker + warm your home]:::product
+I --> G
+E --> H[Metabase Analytics]:::product
 ```
 
 * **Ingestion:** Python modules in `ingest/` execute parameterized `GET`/`POST` requests against 7 sources through a shared `common.py` helper, run nightly by `run_daily.sh` (launchd, 20:00 Europe/Stockholm), with a dedicated historical backfill mode.
 
 * **Storage:** PostgreSQL 16 (`swedish_el`) is the landing zone and warehouse (schemas `raw` / `bronze` / `silver` / `gold`). Writes are idempotent on `(input_file_name, file_modification_time)`.
 
-* **Data Processing:** dbt-core + dbt-postgres runs the Medallion stages (Raw → Bronze → Silver → Gold) every night, feeding a scikit-learn price forecast and a static ECharts site. Metabase (Docker) serves internal analytics.
+* **Data Processing:** dbt-core + dbt-postgres runs the Medallion stages (Raw → Bronze → Silver → Gold) every night, feeding a scikit-learn price forecast — which in turn feeds an **hourly thermostat cost model** (`gold.thermostat_hourly`: when-to-heat + heating cost) — and a static ECharts site. Metabase (Docker) serves internal analytics.
 
 ---
 
@@ -81,20 +81,22 @@ The pipeline enforces strict design rules: idempotent writes at every layer, raw
 
 ### Gold Layer (`gold.*`) — Product Data Model
 
-* **Goal:** Star schema for BI plus a flat product table.
+* **Goal:** Star schema for BI plus flat product tables.
 * **Dims:** `dim_calendar` (daily spine 2022–2030, `date_key`), `dim_bidding_zone` (SE1–SE4, `zone_key`), `dim_station` (SMHI stations).
 * **Facts:** `fact_daily` (zone × day grain). Joins prices, taxes, grid fees, weather and hydro.
   **Total consumer cost = `(price_sek_kwh_avg + energy_tax_sek_kwh + grid_fee_sek_kwh) × 1.25`** (25% VAT).
-* **Also:** `gas_price_daily_sek`, `driver_daily` (un-pivoted drivers), and the product table.
-* **Product:** `thermostat_dataset_stockholm` — flat, self-contained SE3/SE4 dataset for the smart-thermostat / heating use case.
+* **Also:** `gas_price_daily_sek`, `driver_daily` (un-pivoted drivers).
+* **Product tables (thermostat / heating):**
+  * `thermostat_dataset_stockholm` — flat, self-contained **daily** SE3/SE4 extract for the smart-thermostat use case.
+  * **`thermostat_hourly`** — the **hourly** heating-cost / when-to-heat model (SE1–SE4, one row per hour × zone). Carries an `is_forecast` flag: past hours are **actual** (from silver), future hours are **predicted** (the ML daily spot spread by the intraday price shape + SMHI hourly forecast temperature). Outputs `bill_sek_kwh = (spot + tax + fee) × 1.25`, `heating_demand = max(0, 15 − temp)`, `heat_cost_sek` (with a p10–p90 cost range) and `price_rank_in_day` / `is_cheapest_4h` (when to heat). The ML `price_forecast` is wired in as a dbt **source**; three dbt tests gate it (grain uniqueness on `ts_local × zone`, not-null keys, forecast range `p10 ≤ spot ≤ p90`). Forecast horizon is bounded by the SMHI weather forecast (~9 days: hourly near-term, 3-hourly extended).
 
 ---
 
 ## 4. Execution, CI/CD, & Orchestration
 
 * **Scheduler:** macOS launchd (`com.mlinggar.swedish-el`) runs `run_daily.sh` nightly at 20:00 Europe/Stockholm, wrapped in `caffeinate` so the Mac stays awake.
-* **Pipeline chain:** `run_daily.sh` runs 7 Python ingest modules → `dbt build` (bronze/silver/gold + tests) → `jupyter nbconvert` for the ML forecast → `build_site.py` → auto-commit & push `docs/` to GitHub Pages.
-* **ML:** `ml/price_forecast.ipynb` (scikit-learn GradientBoosting + quantile bands) writes `gold.price_forecast*`.
+* **Pipeline chain:** `run_daily.sh` runs 7 Python ingest modules → `dbt build` (bronze/silver/gold + tests) → `jupyter nbconvert` for the ML forecast → **rebuild `thermostat_hourly`** (so its forecast branch picks up the fresh ML output) → `build_site.py` → auto-commit & push `docs/` to GitHub Pages.
+* **ML:** `ml/price_forecast.ipynb` (scikit-learn GradientBoosting + quantile bands) writes `gold.price_forecast*` — consumed both by the site and, as a dbt **source**, by the hourly thermostat cost model.
 * **BI:** Metabase OSS (Docker) for internal dashboards (spot volatility, true consumer bill, zone spreads); dashboards are defined as code in `metabase/`.
 * **Deployment:** code is edited locally and pushed to GitHub; the nightly run refreshes the site data and pushes the generated `docs/`.
 
@@ -106,6 +108,7 @@ The pipeline enforces strict design rules: idempotent writes at every layer, raw
 python -m ingest.entsoe && python -m ingest.scb   # … (7 sources)
 dbt build --project-dir dbt --profiles-dir dbt
 jupyter nbconvert --to notebook --execute ml/price_forecast.ipynb
+dbt build --select thermostat_hourly --project-dir dbt --profiles-dir dbt   # fresh forecast
 python site/build_site.py
 ```
 
@@ -136,4 +139,4 @@ The platform runs entirely on one Mac with free, open-source software. Total sof
 1. **Public electricity price tracker (GitHub Pages):** live spot + all-in bill, day/week/month forecast with a p10–p90 band, bill breakdown, "plan your use" (cheapest hours), zone comparison (SE1–SE4), "what moves the price" (drivers + correlation), postcode→zone finder and a monthly bill estimator.
 2. **ML price & bill forecast:** scikit-learn GradientBoosting produces `price_forecast` (spot p50 + p10–p90) and the all-in bill `(spot + tax + fee) × 1.25` for the next day, week and month.
 3. **Metabase analytics:** internal dashboards for hourly price volatility, true consumer bill estimation and zone comparisons (SE1 vs SE4 spreads).
-4. **Smart-thermostat / heating product:** `thermostat_dataset_stockholm` (SE3/SE4) plus the "Warm your home for less" load-shifting demo — heat during the cheap overnight window and coast through the peaks.
+4. **Smart-thermostat / heating product:** `gold.thermostat_hourly` (SE1–SE4) powers the "Warm your home for less" section — a next-24h **when-to-heat** chart (cheapest hours highlighted), hourly heating cost shown **daily and monthly**, and an **expensive-day red alert** when today's price runs >10% above the recent 14-day average. The daily `thermostat_dataset_stockholm` (SE3/SE4) remains the flat historical extract.
