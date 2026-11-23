@@ -1,7 +1,5 @@
 # Swedish EL Data Platform: System Architecture
 
-[[_TOC_]]
-
 ## 1. System Architecture Flow
 
 The following diagram illustrates the end-to-end data flow.
