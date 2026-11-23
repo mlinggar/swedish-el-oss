@@ -41,7 +41,14 @@ if [ -n "$(git status --porcelain docs/)" ]; then
   echo "--- push ---"
   git add docs/
   git commit -m "daily: $(date +%F)"
-  git push
+  # integrate any remote changes (e.g. GitHub web edits) before pushing, so the push is
+  # never rejected with "fetch first"; abort cleanly if the rebase conflicts
+  if git pull --rebase origin main; then
+    git push || echo "[warn] git push failed - run 'git pull --rebase origin main && git push' manually"
+  else
+    git rebase --abort 2>/dev/null || true
+    echo "[warn] git pull --rebase failed (conflict?); skipped push - resolve + push manually"
+  fi
 fi
 
 echo "=== run finished $(date) ==="
