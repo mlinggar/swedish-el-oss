@@ -13,7 +13,8 @@ echo "=== run started $(date) ==="
 # 1. ingest (daily mode, 7 free sources)
 for s in ecb eia scb entsoe forecast hydro metobs; do
   echo "--- ingest $s ---"
-  python -m ingest.$s || echo "[warn] ingest $s failed; continuing (as-of carries the gap)"
+  # cap each source at 10 min so a slow/hung API can't stall the pipeline (perl alarm = portable timeout)
+  perl -e 'alarm shift; exec @ARGV' 600 python -m ingest.$s || echo "[warn] ingest $s failed/timed out; continuing (as-of carries the gap)"
 done
 
 # 2. dbt: seed + bronze (incremental) + silver/gold (full) + tests
