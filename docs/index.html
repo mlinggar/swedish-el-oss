@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Swedish EL — electricity spot price, bill and forecast</title>
+  <title>Swedish EL: electricity spot price, bill and forecast</title>
   <meta name="description" content="Track the Swedish electricity spot price and the full bill you pay, with an honest forecast for the next day, week and month. Plan when to use electricity.">
   <meta name="theme-color" content="#eef1f5">
-  <meta property="og:title" content="Swedish EL — electricity spot price, bill and forecast">
+  <meta property="og:title" content="Swedish EL: electricity spot price, bill and forecast">
   <meta property="og:description" content="Spot price, the bill you actually pay, and a forecast for the day, week and month ahead.">
   <meta property="og:type" content="website">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=d10ef74abf">
+  <link rel="stylesheet" href="styles.css?v=7a8e544689">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -58,14 +58,14 @@
           <div class="now" id="now-block">
             <div class="stat is-spot">
               <p class="label">Spot price <span id="now-zone">SE4</span></p>
-              <p class="value tnum"><span id="now-spot">—</span><span class="unit">SEK/kWh</span></p>
+              <p class="value tnum"><span id="now-spot">·</span><span class="unit">SEK/kWh</span></p>
             </div>
             <div class="stat">
               <p class="label">All-in bill</p>
-              <p class="value tnum"><span id="now-bill">—</span><span class="unit">SEK/kWh</span></p>
+              <p class="value tnum"><span id="now-bill">·</span><span class="unit">SEK/kWh</span></p>
             </div>
           </div>
-          <p class="updated">Latest day-ahead price for <span id="now-date">—</span>. Data refreshes daily.</p>
+          <p class="updated">Latest day-ahead price for <span id="now-date">·</span>. Data refreshes daily.</p>
         </div>
 
         <div class="well" data-reveal>
@@ -178,7 +178,7 @@
             <ul class="bill-list" id="bill-list"></ul>
             <div class="bill-total">
               <span class="nm">Total you pay</span>
-              <span class="vv tnum" id="bill-total">—</span>
+              <span class="vv tnum" id="bill-total">·</span>
             </div>
           </div>
         </div>
@@ -243,17 +243,17 @@
         <div class="plan-grid">
           <div class="plan-stat" data-reveal>
             <p class="label small">Cheapest hour (most days)</p>
-            <p class="big tnum"><span id="plan-hour">—</span><span class="u">:00</span></p>
+            <p class="big tnum"><span id="plan-hour">·</span><span class="u">:00</span></p>
             <p class="small">Local time. Good for EV charging and timers.</p>
           </div>
           <div class="plan-stat" data-reveal>
             <p class="label small">Off-peak vs peak</p>
-            <p class="big tnum"><span id="plan-offpeak">—</span><span class="u"> vs </span><span id="plan-peak">—</span></p>
+            <p class="big tnum"><span id="plan-offpeak">·</span><span class="u"> vs </span><span id="plan-peak">·</span></p>
             <p class="small">Off-peak SEK/kWh vs peak SEK/kWh. Nights and weekends are cheaper.</p>
           </div>
           <div class="plan-stat" data-reveal>
             <p class="label small">Cheapest day of the week</p>
-            <p class="big"><span id="plan-cheapday">—</span></p>
+            <p class="big"><span id="plan-cheapday">·</span></p>
             <p class="small">Based on the last 90 days of spot prices.</p>
           </div>
         </div>
@@ -309,9 +309,9 @@
             </div>
             <div class="cost-out">
               <p class="small" style="margin:0">Heating adds about</p>
-              <p class="big"><span id="warm-cost">—</span><small>SEK / day</small></p>
-              <p class="month"><span id="warm-cost-month">—</span><small>SEK / month</small></p>
-              <p class="sub"><span id="warm-kwh">—</span> kWh/day · at <span id="warm-price">—</span> SEK/kWh</p>
+              <p class="big"><span id="warm-cost">·</span><small>SEK / day</small></p>
+              <p class="month"><span id="warm-cost-month">·</span><small>SEK / month</small></p>
+              <p class="sub"><span id="warm-kwh">·</span> kWh/day · at <span id="warm-price">·</span> SEK/kWh</p>
               <p class="sub" id="warm-save"></p>
             </div>
             <p class="chart-note">Assumes a typical home and a heat pump (COP 3). Each degree lower
@@ -407,37 +407,37 @@
           <p class="eyebrow">The four zones</p>
           <h2>What are SE1, SE2, SE3 and SE4?</h2>
           <p class="lede">Sweden is split into four electricity price zones running north to south. Each
-            zone sets its own price from local supply and demand, so where you live decides what you pay —
+            zone sets its own price from local supply and demand, so where you live decides what you pay,
             which is why the north is usually cheaper than the south.</p>
         </div>
 
         <div class="zones-layout">
           <div class="zones-map" data-reveal>
-            <svg class="se-map" viewBox="0 0 340 700" role="img"
+            <svg class="se-map" viewBox="0 0 340 680" role="img"
                  aria-label="Map of Sweden showing the four electricity price zones SE1 to SE4 from north to south">
               <defs>
                 <clipPath id="sweden-clip">
-                  <path d="M152 16 L214 66 C246 116 256 172 248 226 C242 274 238 318 234 362 C228 418 214 474 192 528 L156 582 L126 660 L100 618 L96 556 L88 490 L76 414 L64 342 L62 268 L72 196 L94 128 L122 74 Z"/>
+                  <path d="M259.9 172.6 L239.4 204.1 L242.7 231.7 L209.0 267.9 L168.1 306.8 L152.7 370.3 L167.8 402.1 L188.0 427.1 L168.6 478.0 L146.5 488.5 L138.4 564.2 L126.4 606.5 L100.7 602.1 L88.7 637.9 L64.2 640.0 L57.5 597.4 L39.8 546.2 L23.7 482.4 L33.0 456.4 L50.6 425.5 L57.6 372.4 L44.1 349.6 L42.8 289.7 L56.5 247.4 L77.5 248.1 L84.9 230.2 L77.2 214.8 L110.1 151.4 L131.3 101.4 L145.3 69.3 L165.6 69.4 L171.2 44.3 L211.1 51.5 L214.2 21.9 L227.3 20.0 L255.6 42.1 L288.6 72.8 L289.2 142.3 L296.3 159.8 L259.9 172.6 Z"/>
                 </clipPath>
               </defs>
               <g clip-path="url(#sweden-clip)">
-                <rect x="0" y="0" width="340" height="345" class="z-band z1"/>
-                <rect x="0" y="345" width="340" height="92" class="z-band z2"/>
-                <rect x="0" y="437" width="340" height="158" class="z-band z3"/>
-                <rect x="0" y="595" width="340" height="105" class="z-band z4"/>
+                <rect x="0" y="0" width="340" height="205" class="z-band z1"/>
+                <rect x="0" y="205" width="340" height="194" class="z-band z2"/>
+                <rect x="0" y="399" width="340" height="167" class="z-band z3"/>
+                <rect x="0" y="566" width="340" height="114" class="z-band z4"/>
               </g>
-              <path class="se-outline" d="M152 16 L214 66 C246 116 256 172 248 226 C242 274 238 318 234 362 C228 418 214 474 192 528 L156 582 L126 660 L100 618 L96 556 L88 490 L76 414 L64 342 L62 268 L72 196 L94 128 L122 74 Z"/>
+              <path class="se-outline" d="M259.9 172.6 L239.4 204.1 L242.7 231.7 L209.0 267.9 L168.1 306.8 L152.7 370.3 L167.8 402.1 L188.0 427.1 L168.6 478.0 L146.5 488.5 L138.4 564.2 L126.4 606.5 L100.7 602.1 L88.7 637.9 L64.2 640.0 L57.5 597.4 L39.8 546.2 L23.7 482.4 L33.0 456.4 L50.6 425.5 L57.6 372.4 L44.1 349.6 L42.8 289.7 L56.5 247.4 L77.5 248.1 L84.9 230.2 L77.2 214.8 L110.1 151.4 L131.3 101.4 L145.3 69.3 L165.6 69.4 L171.2 44.3 L211.1 51.5 L214.2 21.9 L227.3 20.0 L255.6 42.1 L288.6 72.8 L289.2 142.3 L296.3 159.8 L259.9 172.6 Z"/>
               <g class="se-labels">
-                <text x="155" y="185">SE1</text>
-                <text x="150" y="392">SE2</text>
-                <text x="140" y="515">SE3</text>
-                <text x="128" y="632">SE4</text>
+                <text x="205" y="125">SE1</text>
+                <text x="120" y="308">SE2</text>
+                <text x="112" y="488">SE3</text>
+                <text x="95" y="612">SE4</text>
               </g>
               <g class="se-cities">
-                <circle cx="205" cy="470" r="4"/><text x="212" y="474">Stockholm</text>
-                <circle cx="118" cy="648" r="4"/><text x="124" y="666">Malmö</text>
+                <circle cx="173" cy="461" r="3"/><text x="181" y="465">Stockholm</text>
+                <circle cx="65" cy="629" r="3"/><text x="72" y="647">Malmö</text>
               </g>
-              <g class="se-north"><line x1="300" y1="70" x2="300" y2="30"/><polygon points="300,22 294,36 306,36"/><text x="300" y="88">N</text></g>
+              <g class="se-north"><line x1="312" y1="72" x2="312" y2="34"/><polygon points="312,26 306,40 318,40"/><text x="312" y="90">N</text></g>
             </svg>
           </div>
 
@@ -460,7 +460,7 @@
               <span class="zone-badge z3">SE3</span>
               <div>
                 <p class="zone-name">Eastern Sweden <span>(Stockholm)</span></p>
-                <p class="zone-desc">The biggest demand — Stockholm and industry — with less local generation. Pricier.</p>
+                <p class="zone-desc">The biggest demand, Stockholm and industry, with less local generation. Pricier.</p>
               </div>
             </div>
             <div class="zone-item">
@@ -495,15 +495,15 @@
             <li>Forecast: gradient-boosted model, p50 with p10-p90</li>
             <li>Zones SE1-SE4 (Nord Pool bidding areas)</li>
           </ul>
-          <p class="small" style="margin-top:12px">Generated <span id="foot-generated">—</span></p>
+          <p class="small" style="margin-top:12px">Generated <span id="foot-generated">·</span></p>
         </div>
       </div>
       <div class="foot-mark" aria-hidden="true">Swedish EL</div>
     </div>
   </footer>
 
-  <script src="data.js?v=d10ef74abf" defer></script>
+  <script src="data.js?v=7a8e544689" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js" defer></script>
-  <script src="app.js?v=d10ef74abf" defer></script>
+  <script src="app.js?v=7a8e544689" defer></script>
 </body>
 </html>

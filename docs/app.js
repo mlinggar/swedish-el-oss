@@ -1,4 +1,4 @@
-/* Swedish EL — charts + interaction. Reads window.__DATA__ (see build_site.py).
+/* Swedish EL: charts + interaction. Reads window.__DATA__ (see build_site.py).
    Concept "the honest line": solid ink = recorded, accent + soft band = forecast. */
 (function () {
   "use strict";
@@ -16,7 +16,7 @@
     cheap: "#2e8b6f", mid: "#e4a11b", dear: "#c0392b"
   };
 
-  function fmt(v, n) { n = n == null ? 2 : n; return v == null ? "—" : Number(v).toLocaleString("en-SE", { minimumFractionDigits: n, maximumFractionDigits: n }); }
+  function fmt(v, n) { n = n == null ? 2 : n; return v == null ? "·" : Number(v).toLocaleString("en-SE", { minimumFractionDigits: n, maximumFractionDigits: n }); }
   function ramp(t) {
     t = Math.max(0, Math.min(1, t));
     var stops = [[46, 139, 111], [228, 161, 27], [192, 57, 43]];
@@ -80,7 +80,7 @@
       tooltip: {
         trigger: "axis", backgroundColor: "#fff", borderColor: C.line, borderWidth: 1,
         textStyle: { color: C.ink, fontSize: 12 }, padding: [8, 12],
-        valueFormatter: function (v) { return v == null ? "—" : fmt(v, 3) + " SEK/kWh"; }
+        valueFormatter: function (v) { return v == null ? "·" : fmt(v, 3) + " SEK/kWh"; }
       },
       xAxis: { type: "category", data: xd, boundaryGap: false, axisLine: { lineStyle: { color: C.line } }, axisLabel: { color: C.muted, fontSize: 11 }, axisTick: { show: false } },
       yAxis: { type: "value", scale: true, splitLine: { lineStyle: { color: C.line } }, axisLabel: { color: C.muted, fontSize: 11 } },
@@ -132,7 +132,7 @@
 
   // ---- hero now numbers ----
   function countUp(node, to, n) {
-    if (to == null) { node.textContent = "—"; return; }
+    if (to == null) { node.textContent = "·"; return; }
     if (reduce) { node.textContent = fmt(to, n); return; }
     var from = 0, t0 = performance.now(), dur = 750;
     (function step(t) {
@@ -147,7 +147,7 @@
     $("#hero-zone-label").textContent = zone + " · SEK/kWh";
     countUp($("#now-spot"), w.spot, 2);
     countUp($("#now-bill"), w.bill, 2);
-    $("#now-date").textContent = w.date || "—";
+    $("#now-date").textContent = w.date || "·";
   }
 
   // ---- horizon cards ----
@@ -194,13 +194,13 @@
   // ---- plan your use ----
   function renderPlan() {
     var p = D.plan[zone] || {};
-    $("#plan-hour").textContent = p.cheapest_hour != null ? ("0" + p.cheapest_hour).slice(-2) : "—";
+    $("#plan-hour").textContent = p.cheapest_hour != null ? ("0" + p.cheapest_hour).slice(-2) : "·";
     $("#plan-offpeak").textContent = fmt(p.offpeak);
     $("#plan-peak").textContent = fmt(p.peak);
     var dow = p.day_of_week || [], names = p.dow_names || [];
     var minI = -1, minV = Infinity;
     dow.forEach(function (v, i) { if (v != null && v < minV) { minV = v; minI = i; } });
-    $("#plan-cheapday").textContent = minI >= 0 ? names[minI] : "—";
+    $("#plan-cheapday").textContent = minI >= 0 ? names[minI] : "·";
 
     var isHour = planView === "hour";
     var vals = isHour ? (p.hourly || []) : dow;
@@ -253,7 +253,7 @@
     $("#driver-cards").innerHTML = groups.map(function (g) {
       var rows = g.items.map(function (fk) {
         var meta = dr.meta[fk] || {}, latest = (dr.latest[zone] || {})[fk] || {}, r = (dr.correlation[zone] || {})[fk];
-        var rTxt = (r == null ? "—" : "r " + (r >= 0 ? "+" : "") + fmt(r, 2));
+        var rTxt = (r == null ? "·" : "r " + (r >= 0 ? "+" : "") + fmt(r, 2));
         return '<li><span class="dc-nm">' + meta.label + '</span>' +
           '<span class="dc-v tnum">' + fmt(latest.v, 1) + ' <small>' + meta.unit + '</small></span>' +
           '<span class="dc-r ' + (r >= 0 ? "pos" : "neg") + '">' + rTxt + '</span></li>';
@@ -404,7 +404,7 @@
     }, true);
     var wdw = heatWindow(bills);
     $("#warm-chips").innerHTML =
-      '<span class="chip good">Best window to heat: ' + hh(wdw.from) + ' – ' + hh(wdw.to) + '</span>' +
+      '<span class="chip good">Best window to heat: ' + hh(wdw.from) + ' to ' + hh(wdw.to) + '</span>' +
       '<span class="chip bad">Most expensive: ' + hh(bills.indexOf(hi)) + ' (' + fmt(hi, 2) + ')</span>';
     $("#warm-note").innerHTML = "Heat in the <strong>green window</strong> and coast through the peaks. Over the next 24 hours the price you pay swings from <strong>" + fmt(lo, 2) + "</strong> to <strong>" + fmt(hi, 2) + " SEK/kWh</strong>, a <strong>" + (hi / lo).toFixed(1) + "x</strong> difference.";
     if (alert) {
@@ -412,7 +412,7 @@
         alert.hidden = false;
         alert.innerHTML = "⚠ <strong>Today is an expensive day.</strong> Power is about <strong>" + fmt(today.pct, 0) +
           "%</strong> above the recent average (" + fmt(today.bill, 2) + " vs " + fmt(today.recent_bill, 2) +
-          " SEK/kWh). Shift heating into the cheap window <strong>" + hh(wdw.from) + " – " + hh(wdw.to) +
+          " SEK/kWh). Shift heating into the cheap window <strong>" + hh(wdw.from) + " to " + hh(wdw.to) +
           "</strong> and coast through the peak.";
       } else {
         alert.hidden = true;
@@ -472,7 +472,7 @@
         res.textContent = "This postcode is near a zone boundary. Confirm your zone on your electricity bill (elnätsfaktura).";
         res.className = "finder-result is-warn";
       } else {
-        res.textContent = "You're in " + r.zone + " — " + ZONE_DESC[r.zone] + ". Charts updated below.";
+        res.textContent = "You're in " + r.zone + ", " + ZONE_DESC[r.zone] + ". Charts updated below.";
         res.className = "finder-result is-ok";
         setZone(r.zone);
       }
@@ -510,7 +510,7 @@
     var shown = months.slice(0, n);
     var html = shown.map(function (m) {
       var range = (m.p10 != null && m.p90 != null)
-        ? ' · range ' + fmt(usage * m.p10, 0) + '–' + fmt(usage * m.p90, 0) : '';
+        ? ' · range ' + fmt(usage * m.p10, 0) + ' to ' + fmt(usage * m.p90, 0) : '';
       return '<div class="est-row"><div><p class="est-k">' + (m.label || "") + '</p>' +
         '<p class="est-sub">at ' + fmt(m.price, 2) + ' SEK/kWh' + range + '</p></div>' +
         '<p class="est-v tnum">' + fmt(usage * (m.price || 0), 0) + '<small>SEK</small></p></div>';
@@ -549,7 +549,7 @@
 
   // ---- footer ----
   $("#foot-sources").innerHTML = (D.meta.sources || []).map(function (s) { return "<li>" + s + "</li>"; }).join("");
-  $("#foot-generated").textContent = D.meta.generated_at || "—";
+  $("#foot-generated").textContent = D.meta.generated_at || "·";
 
   // ---- motion: a staggered entrance (native scroll; never leaves content hidden) ----
   function initMotion() {
