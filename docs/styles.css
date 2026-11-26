@@ -118,7 +118,7 @@ h1 {
 }
 h2 { font-size: clamp(28px, 4vw, 46px); line-height: 1.04; font-weight: 600; }
 h3 { font-size: clamp(19px, 2vw, 24px); line-height: 1.15; font-weight: 600; }
-.lede { color: var(--muted); font-size: clamp(17px, 1.6vw, 21px); margin: 18px 0 0; max-width: 52ch; }
+.lede { color: var(--muted); font-size: clamp(17px, 1.6vw, 21px); margin: 18px 0 0; max-width: 52ch; text-align: justify; }
 .small { font-size: 13px; color: var(--muted); }
 .tnum { font-variant-numeric: tabular-nums; }
 
