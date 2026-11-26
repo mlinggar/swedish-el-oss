@@ -382,10 +382,13 @@
     if (c) c.setOption({
       animation: !reduce, grid: { left: 6, right: 10, top: 12, bottom: 4, containLabel: true },
       tooltip: {
+        trigger: "axis", axisPointer: { type: "shadow" },
+        backgroundColor: "#fff", borderColor: C.line, borderWidth: 1,
+        textStyle: { color: C.ink, fontSize: 12 }, padding: [8, 12],
         formatter: function (p) {
-          var r = hourly[p[0].dataIndex] || {};
+          var r = hourly[(p[0] || {}).dataIndex] || {};
           return (r.date || "") + " " + ("0" + r.h).slice(-2) + ":00<br>Bill <b>" + fmt(r.bill, 2) +
-                 "</b> SEK/kWh · heat <b>" + fmt(r.heat, 0) + "</b> SEK";
+                 "</b> SEK/kWh<br>Heat <b>" + fmt(r.heat, 0) + "</b> SEK";
         }
       },
       xAxis: {
