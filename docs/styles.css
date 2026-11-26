@@ -103,7 +103,7 @@ a { color: inherit; }
 .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 var(--gutter); }
 section { padding: clamp(56px, 8vw, 104px) 0; }
 .section-head { max-width: none; margin-bottom: clamp(28px, 4vw, 48px); }
-.section-head h2 { max-width: 640px; }
+.section-head h2 { max-width: none; text-align: justify; }
 .eyebrow {
   font-family: var(--f-display); font-size: 12px; font-weight: 500;
   letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent-text);
