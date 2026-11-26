@@ -102,7 +102,8 @@ a { color: inherit; }
 /* ---------- layout ---------- */
 .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 var(--gutter); }
 section { padding: clamp(56px, 8vw, 104px) 0; }
-.section-head { max-width: 640px; margin-bottom: clamp(28px, 4vw, 48px); }
+.section-head { max-width: none; margin-bottom: clamp(28px, 4vw, 48px); }
+.section-head h2 { max-width: 640px; }
 .eyebrow {
   font-family: var(--f-display); font-size: 12px; font-weight: 500;
   letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent-text);
@@ -118,7 +119,7 @@ h1 {
 }
 h2 { font-size: clamp(28px, 4vw, 46px); line-height: 1.04; font-weight: 600; }
 h3 { font-size: clamp(19px, 2vw, 24px); line-height: 1.15; font-weight: 600; }
-.lede { color: var(--muted); font-size: clamp(17px, 1.6vw, 21px); margin: 18px 0 0; max-width: 52ch; text-align: justify; }
+.lede { color: var(--muted); font-size: clamp(17px, 1.6vw, 21px); margin: 18px 0 0; max-width: none; text-align: justify; }
 .small { font-size: 13px; color: var(--muted); }
 .tnum { font-variant-numeric: tabular-nums; }
 
