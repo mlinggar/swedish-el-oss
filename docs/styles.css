@@ -412,6 +412,34 @@ input[type=range] { flex: 1; accent-color: var(--accent); }
 .warm-alert { margin: 0 0 18px; padding: 15px 18px; border-radius: 12px; background: rgba(192, 57, 43, .1); border: 1px solid rgba(192, 57, 43, .35); color: #b02818; font-size: 15px; line-height: 1.55; }
 .warm-alert strong { color: #8f1f11; }
 
+/* ---------- zones explained (SE1-SE4 + map) ---------- */
+.zones-explained { padding: clamp(48px, 8vw, 96px) 0; }
+.zones-layout { display: grid; grid-template-columns: 1fr; gap: clamp(28px, 4vw, 56px); align-items: center; }
+@media (min-width: 900px) { .zones-layout { grid-template-columns: 0.82fr 1.18fr; } }
+.zones-map { display: flex; justify-content: center; }
+.se-map { width: 100%; max-width: 320px; height: auto; }
+.se-map .z1 { fill: #2e8b6f; }
+.se-map .z2 { fill: #5aa37c; }
+.se-map .z3 { fill: #e4a11b; }
+.se-map .z4 { fill: #c0392b; }
+.se-map .se-outline { fill: none; stroke: var(--surface); stroke-width: 3; stroke-linejoin: round; }
+.se-map .se-labels text { font-family: var(--f-display); font-weight: 700; font-size: 25px; fill: #fff; text-anchor: middle; }
+.se-map .se-cities circle { fill: var(--ink); }
+.se-map .se-cities text { font-family: var(--f-body); font-size: 12px; fill: var(--ink); }
+.se-map .se-north line { stroke: var(--muted); stroke-width: 2; }
+.se-map .se-north polygon { fill: var(--muted); }
+.se-map .se-north text { font-family: var(--f-display); font-size: 13px; fill: var(--muted); text-anchor: middle; }
+.zones-list { display: flex; flex-direction: column; gap: 14px; }
+.zone-item { display: flex; gap: 16px; align-items: flex-start; padding: 16px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); }
+.zone-badge { font-family: var(--f-display); font-weight: 700; font-size: 15px; color: #fff; padding: 9px 12px; border-radius: 9px; flex-shrink: 0; min-width: 54px; text-align: center; }
+.zone-badge.z1 { background: #2e8b6f; }
+.zone-badge.z2 { background: #5aa37c; }
+.zone-badge.z3 { background: #e4a11b; }
+.zone-badge.z4 { background: #c0392b; }
+.zone-name { font-family: var(--f-display); font-weight: 600; font-size: 18px; margin: 3px 0 5px; color: var(--ink); }
+.zone-name span { color: var(--muted); font-weight: 500; font-size: 15px; }
+.zone-desc { color: var(--muted); font-size: 15px; line-height: 1.55; margin: 0; }
+
 /* ---------- reveal (motion) ---------- */
 [data-reveal] { transition: opacity 0.7s var(--ease), transform 0.7s var(--ease); }
 .js-motion [data-reveal]:not(.is-in) { opacity: 0; transform: translateY(18px); }

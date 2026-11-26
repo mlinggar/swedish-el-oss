@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=590ce4960c">
+  <link rel="stylesheet" href="styles.css?v=d10ef74abf">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -399,6 +399,81 @@
         </div>
       </div>
     </section>
+
+    <!-- ZONES EXPLAINED: SE1-SE4 + map -->
+    <section class="zones-explained" id="zones-explained">
+      <div class="wrap">
+        <div class="section-head" data-reveal>
+          <p class="eyebrow">The four zones</p>
+          <h2>What are SE1, SE2, SE3 and SE4?</h2>
+          <p class="lede">Sweden is split into four electricity price zones running north to south. Each
+            zone sets its own price from local supply and demand, so where you live decides what you pay —
+            which is why the north is usually cheaper than the south.</p>
+        </div>
+
+        <div class="zones-layout">
+          <div class="zones-map" data-reveal>
+            <svg class="se-map" viewBox="0 0 340 700" role="img"
+                 aria-label="Map of Sweden showing the four electricity price zones SE1 to SE4 from north to south">
+              <defs>
+                <clipPath id="sweden-clip">
+                  <path d="M152 16 L214 66 C246 116 256 172 248 226 C242 274 238 318 234 362 C228 418 214 474 192 528 L156 582 L126 660 L100 618 L96 556 L88 490 L76 414 L64 342 L62 268 L72 196 L94 128 L122 74 Z"/>
+                </clipPath>
+              </defs>
+              <g clip-path="url(#sweden-clip)">
+                <rect x="0" y="0" width="340" height="345" class="z-band z1"/>
+                <rect x="0" y="345" width="340" height="92" class="z-band z2"/>
+                <rect x="0" y="437" width="340" height="158" class="z-band z3"/>
+                <rect x="0" y="595" width="340" height="105" class="z-band z4"/>
+              </g>
+              <path class="se-outline" d="M152 16 L214 66 C246 116 256 172 248 226 C242 274 238 318 234 362 C228 418 214 474 192 528 L156 582 L126 660 L100 618 L96 556 L88 490 L76 414 L64 342 L62 268 L72 196 L94 128 L122 74 Z"/>
+              <g class="se-labels">
+                <text x="155" y="185">SE1</text>
+                <text x="150" y="392">SE2</text>
+                <text x="140" y="515">SE3</text>
+                <text x="128" y="632">SE4</text>
+              </g>
+              <g class="se-cities">
+                <circle cx="205" cy="470" r="4"/><text x="212" y="474">Stockholm</text>
+                <circle cx="118" cy="648" r="4"/><text x="124" y="666">Malmö</text>
+              </g>
+              <g class="se-north"><line x1="300" y1="70" x2="300" y2="30"/><polygon points="300,22 294,36 306,36"/><text x="300" y="88">N</text></g>
+            </svg>
+          </div>
+
+          <div class="zones-list" data-reveal>
+            <div class="zone-item">
+              <span class="zone-badge z1">SE1</span>
+              <div>
+                <p class="zone-name">Northern Sweden <span>(Norrland)</span></p>
+                <p class="zone-desc">Vast hydropower reservoirs make more cheap power than the region uses. Usually the cheapest zone.</p>
+              </div>
+            </div>
+            <div class="zone-item">
+              <span class="zone-badge z2">SE2</span>
+              <div>
+                <p class="zone-name">North-Central Sweden</p>
+                <p class="zone-desc">Hydropower and wind with more supply than local demand. Typically cheap, close to SE1.</p>
+              </div>
+            </div>
+            <div class="zone-item">
+              <span class="zone-badge z3">SE3</span>
+              <div>
+                <p class="zone-name">Eastern Sweden <span>(Stockholm)</span></p>
+                <p class="zone-desc">The biggest demand — Stockholm and industry — with less local generation. Pricier.</p>
+              </div>
+            </div>
+            <div class="zone-item">
+              <span class="zone-badge z4">SE4</span>
+              <div>
+                <p class="zone-name">Southern Sweden <span>(Malmö)</span></p>
+                <p class="zone-desc">High demand, limited generation and grid bottlenecks importing from the north. Usually the most expensive.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer>
@@ -427,8 +502,8 @@
     </div>
   </footer>
 
-  <script src="data.js?v=590ce4960c" defer></script>
+  <script src="data.js?v=d10ef74abf" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js" defer></script>
-  <script src="app.js?v=590ce4960c" defer></script>
+  <script src="app.js?v=d10ef74abf" defer></script>
 </body>
 </html>
